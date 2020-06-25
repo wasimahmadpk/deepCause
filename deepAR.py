@@ -2,6 +2,7 @@ from gluonts.dataset import common
 from gluonts.model import deepar
 from gluonts.trainer import Trainer
 from gluonts.evaluation import Evaluator
+import confidence
 import crps
 
 import pandas as pd
@@ -25,6 +26,7 @@ predictor = estimator.train(training_data=data)
 
 
 actual = Edf.MT_003[44100:44124].values.tolist()
+actual, lower, upper = confidence.mean_confidence_interval(actual, 0.90)
 
 prediction = next(predictor.predict(data))
 eval = Evaluator()
@@ -39,7 +41,7 @@ print("CRPS: ", crps.calc_crps(forecast, actual))
 
 prediction.plot(output_file='plots/graph.png')
 
-compare_df = pd.DataFrame({'Actual': actual, 'Forecast': forecast})
+compare_df = pd.DataFrame({'Actual': actual, 'Upper': upper, 'lower': lower, 'Forecast': forecast})
 
 # plot the two vectors
 ax = compare_df.plot(colormap='jet', marker='.', markersize=10, title='Forecasting Electricity Consumption')
