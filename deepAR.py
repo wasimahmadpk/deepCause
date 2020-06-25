@@ -3,6 +3,7 @@ from gluonts.model import deepar
 from gluonts.trainer import Trainer
 from gluonts.evaluation import Evaluator
 import confidence
+import numpy as np
 import crps
 
 import pandas as pd
@@ -32,6 +33,7 @@ forecast = prediction.mean
 print(prediction.mean)
 print("MAPE: ", eval.mape(actual, forecast))
 print("MSE: ", eval.mse(actual, forecast))
+print("RMSE: ", np.roots(eval.mse(actual, forecast)))
 print("CRPS: ", crps.calc_crps(forecast, actual))
 
 prediction.plot(output_file='plots/graph.png')
