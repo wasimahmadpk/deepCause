@@ -19,21 +19,16 @@ data = common.ListDataset([{
 }],
                           freq="5min")
 
-trainer = Trainer(epochs=50)
+trainer = Trainer(epochs=10)
 estimator = deepar.DeepAREstimator(
     freq="5min", prediction_length=24, trainer=trainer)
 predictor = estimator.train(training_data=data)
 
-
 actual = Edf.MT_003[44100:44124].values.tolist()
-actual, lower, upper = confidence.mean_confidence_interval(actual, 0.90)
-
 prediction = next(predictor.predict(data))
 eval = Evaluator()
 forecast = prediction.mean
 
-print("Forecast shape: ", forecast.shape)
-print("Actual shape: ", len(actual))
 print(prediction.mean)
 print("MAPE: ", eval.mape(actual, forecast))
 print("MSE: ", eval.mse(actual, forecast))
@@ -41,6 +36,7 @@ print("CRPS: ", crps.calc_crps(forecast, actual))
 
 prediction.plot(output_file='plots/graph.png')
 
+actual, lower, upper = confidence.mean_confidence_interval(actual, 0.90)
 compare_df = pd.DataFrame({'Actual': actual, 'Upper': upper, 'lower': lower, 'Forecast': forecast})
 
 # plot the two vectors
