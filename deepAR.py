@@ -2,7 +2,7 @@ from gluonts.dataset import common
 from gluonts.model import deepar
 from gluonts.trainer import Trainer
 from gluonts.evaluation import Evaluator
-from netCDF4 import Dataset
+# from netCDF4 import Dataset
 import confidence
 import numpy as np
 import crps
@@ -32,9 +32,10 @@ import netCDF
 Edf = pd.read_csv('/home/ahmad/PycharmProjects/deepCause/datasets/electricity/electricity.csv', header=0, index_col=0)
 data = common.ListDataset([{
     "start": Edf.index[0],
-    "target": Edf.MT_003[:44100]
+    "target": Edf.MT_001[:4]
 }],
                           freq="5min")
+print(data.list_data)
 print("LIne 38")
 trainer = Trainer(epochs=10)
 print("LIne 40")
