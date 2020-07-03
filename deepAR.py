@@ -29,13 +29,11 @@ h_f = nc_fid.variables['H_f'][:].ravel().data
 time = nc_fid.variables['time'][:].ravel().data
 
 # Edf = pd.read_csv('/home/ahmad/PycharmProjects/deepCause/datasets/electricity/electricity.csv', header=0, index_col=0)
-data = common.ListDataset([{
-    "start": 0,
-    "target": reco[:44100]
-}],
-                          freq="5min")
+data = common.ListDataset(
+    [{"start": 0, "target": reco[:44100]}],
+    freq="5min")
 
-trainer = Trainer(epochs=10)
+trainer = Trainer(epochs=15)
 estimator = deepar.DeepAREstimator(
     freq="5min", prediction_length=111, trainer=trainer)
 predictor = estimator.train(training_data=data)
@@ -54,7 +52,7 @@ prediction.plot(output_file='/home/ahmad/PycharmProjects/deepCause/plots/graph.p
 
 actual, lower, upper = confidence.mean_confidence_interval(actual, 0.90)
 compare_df = pd.DataFrame({'Actual': actual, 'Upper': upper, 'lower': lower, 'Forecast': forecast})
-print("LIne 58")
+
 # plot the two vectors
 ax = compare_df.plot(colormap='jet', marker='.', markersize=10, title='Forecasting Electricity Consumption')
 ax.set_xlabel("Time frequency")
