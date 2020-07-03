@@ -1,2 +1,2 @@
 # deepCause
-Time series forecasting with DeepAR using GluonTS API
+Time series forecasting with DeepAR and DeepState models using GluonTS API
