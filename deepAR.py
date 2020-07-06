@@ -30,15 +30,15 @@ time = nc_fid.variables['time'][:].ravel().data
 
 # Edf = pd.read_csv('/home/ahmad/PycharmProjects/deepCause/datasets/electricity/electricity.csv', header=0, index_col=0)
 data = common.ListDataset(
-    [{"start": 0, "target": reco[:44100]}],
-    freq="5min")
+    [{"start": 0, "target": tair_f[:99050]}],
+    freq="60min")
 
 trainer = Trainer(epochs=15)
-estimator = deepar.DeepAREstimator(
-    freq="5min", prediction_length=111, trainer=trainer)
+estimator = deepar.DeepAREstimator(num_layers=3, dropout_rate=0.075,
+    freq="60min", prediction_length=24, trainer=trainer)
 predictor = estimator.train(training_data=data)
 
-actual = reco[44100:44211]
+actual = tair_f[99050:99074]
 prediction = next(predictor.predict(data))
 eval = Evaluator()
 forecast = prediction.mean
@@ -48,14 +48,18 @@ print("MAPE: ", eval.mape(actual, forecast))
 print("MSE: ", eval.mse(actual, forecast))
 print("CRPS: ", crps.calc_crps(forecast, actual))
 
-prediction.plot(output_file='/home/ahmad/PycharmProjects/deepCause/plots/graph.png')
-
-actual, lower, upper = confidence.mean_confidence_interval(actual, 0.90)
-compare_df = pd.DataFrame({'Actual': actual, 'Upper': upper, 'lower': lower, 'Forecast': forecast})
+plt.title('Forecasting Air temperature-95% PI')
+plt.ylabel('T_Air')
+plt.xlabel('Hour of the day')
+prediction.plot(prediction_intervals=(0, 95), color='g', output_file='/home/ahmad/PycharmProjects/deepCause/plots/graph.png')
+plt.plot(actual)
+actual, lower, upper = confidence.mean_confidence_interval(actual, 0.95)
+compare_df = pd.DataFrame({'Actual': actual, 'Upper bound': upper, 'Lower bound': lower, 'Forecast': forecast})
 
 # plot the two vectors
-ax = compare_df.plot(colormap='jet', marker='.', markersize=10, title='Forecasting Electricity Consumption')
-ax.set_xlabel("Time frequency")
-ax.set_ylabel("Electricity consumption")
+ax = compare_df.plot(colormap='jet', marker='.', markersize=10, title='Forecasting Air Temperature-95% CI')
+ax.set_xlabel("Hour of the day")
+ax.set_ylabel("T_Air")
+plt.show()
 fig = ax.get_figure()
 fig.savefig("/home/ahmad/PycharmProjects/deepCause/plots/compare.png")
