@@ -30,15 +30,15 @@ time = nc_fid.variables['time'][:].ravel().data
 
 # Edf = pd.read_csv('/home/ahmad/PycharmProjects/deepCause/datasets/electricity/electricity.csv', header=0, index_col=0)
 data = common.ListDataset(
-    [{"start": 0, "target": tair_f[:99050]}],
+    [{"start": 0, "target": tair_f[:40050]}],
     freq="60min")
 
-trainer = Trainer(epochs=15)
-estimator = deepar.DeepAREstimator(num_layers=3, dropout_rate=0.075,
+trainer = Trainer(epochs=12)
+estimator = deepar.DeepAREstimator(num_layers=2, dropout_rate=0.075,
     freq="60min", prediction_length=24, trainer=trainer)
 predictor = estimator.train(training_data=data)
 
-actual = tair_f[99050:99074]
+actual = tair_f[40050:40074]
 prediction = next(predictor.predict(data))
 eval = Evaluator()
 forecast = prediction.mean
