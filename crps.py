@@ -2,7 +2,7 @@ import numpy as np
 from gluonts.shell import train
 from urllib3.connectionpool import xrange
 
-thresholds = np.arange(111)
+thresholds = np.arange(24)
 
 
 def heavyside(actual):
