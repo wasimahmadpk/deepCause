@@ -52,7 +52,7 @@ predictor = estimator.train(training_data=training_data)
 test_data = ListDataset(
     [
         {"start": 0, "target": tair_f[0:40500]},
-        {"start": 0, "target": taif_f[0:41000]},
+        {"start": 0, "target": tair_f[0:41000]},
         {"start": 0, "target": tair_f[0:41500]}
     ],
     freq = "1D"
