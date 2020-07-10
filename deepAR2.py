@@ -44,7 +44,7 @@ training_data = ListDataset(
 
 estimator = DeepAREstimator(freq="1D", 
                             prediction_length=500, 
-                            trainer=Trainer(epochs=10))
+                            trainer=Trainer(epochs=100))
 
 predictor = estimator.train(training_data=training_data)
 
