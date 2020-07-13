@@ -38,12 +38,12 @@ time = nc_fid.variables['time'][:].ravel().data
 #plt.show()
 
 training_data = ListDataset(
-    [{"start": 0, "target": tair_f[0:40000]}],
+    [{"start": 0, "target": reco[0:15000]}],
     freq = "1D"
 )
 
 estimator = DeepAREstimator(freq="1D", 
-                            prediction_length=500, 
+                            prediction_length=200, 
                             trainer=Trainer(epochs=100))
 
 predictor = estimator.train(training_data=training_data)
@@ -51,9 +51,9 @@ predictor = estimator.train(training_data=training_data)
 
 test_data = ListDataset(
     [
-        {"start": 0, "target": tair_f[0:40500]},
-        {"start": 0, "target": tair_f[0:41000]},
-        {"start": 0, "target": tair_f[0:41500]}
+        {"start": 0, "target": reco[0:15200]},
+        {"start": 0, "target": reco[0:15400]},
+        {"start": 0, "target": reco[0:15600]}
     ],
     freq = "1D"
 )
@@ -65,15 +65,15 @@ def plot_forecasts(tss, forecasts, past_length, num_plots):
         forecast.plot(color='g')
         plt.grid(which='both')
         plt.legend(["observations", "median prediction", "90% confidence interval", "50% confidence interval"])
-        plt.title("Forecasting Air Temperature")
+        plt.title("Forecasting Ecosystem Respiration")
         plt.xlabel("Timestamp")
-        plt.ylabel("T_Air")
+        plt.ylabel("R_Eco")
         plt.show()
 
-forecast_it, ts_it = make_evaluation_predictions(test_data, predictor=predictor, num_samples=500)
+forecast_it, ts_it = make_evaluation_predictions(test_data, predictor=predictor, num_samples=200)
 forecasts = list(forecast_it)
 tss = list(ts_it)
-plot_forecasts(tss, forecasts, past_length=3000, num_plots=3)
+plot_forecasts(tss, forecasts, past_length=600, num_plots=3)
 
 
 evaluator = Evaluator(quantiles=[0.5], seasonality=2006)
