@@ -19,12 +19,8 @@ from gluonts.evaluation.backtest import make_evaluation_predictions
 N = 20  # number of time series
 T = 1000  # number of timesteps
 dim = 2 # dimension of the observations
-prediction_length = 100
-freq = '30min'
-
-custom_datasetx = np.random.normal(size=(N, dim, T))
-custom_datasetx[:, 1, :] = 5*custom_datasetx[:, 1, :]
-start = pd.Timestamp("01-01-2019", freq=freq)
+prediction_length = 150
+freq = '1D'
 
 
 #******************************************************************
@@ -50,33 +46,25 @@ month = nc_fid.variables['month'][:].ravel().data
 year = nc_fid.variables['year'][:].ravel().data
 #******************************************************************
 
-treco = pd.concat([pd.DataFrame(reco, columns=['reco']), pd.DataFrame(tair_f, columns=['temp'])], axis=1)
-
 
 train_ds = ListDataset(
     [
-        {'target': treco[:25000][:], 'start': 0}
-        for x in custom_datasetx[:, :, :-prediction_length]
+        {'target': reco[:15000], 'start': 0, 'dynamic_feat': tair_f[:15000]}
     ],
-    freq=freq,
-    one_dim_target=False,
+    freq=freq
 )
 
 
 
 test_ds = ListDataset(
-    [{'target': treco[:25100], 'start': 0}],
-    freq=freq,
-    one_dim_target=False,
+    [
+        {'target': reco[:15150], 'start': 0, 'dynamic_feat': tair_f[:15150]},
+],
+    freq=freq
 )
 
-# Deep AR 
-
 # Trainer parameters
-epochs = 10
-learning_rate = 1E-3
-batch_size = 5
-num_batches_per_epoch = 100
+epochs = 100
 
 # create estimator
 estimator = DeepAREstimator(
@@ -86,12 +74,8 @@ estimator = DeepAREstimator(
     trainer=Trainer(
         ctx="cpu",
         epochs=epochs,
-        learning_rate=learning_rate,
-        hybridize=True,
-        batch_size=batch_size,
-        num_batches_per_epoch=num_batches_per_epoch,
-    ),
-    distr_output=MultivariateGaussianOutput(dim=dim)
+        hybridize=True
+    )
 )
 
 predictor = estimator.train(train_ds)
@@ -99,7 +83,7 @@ predictor = estimator.train(train_ds)
 forecast_it, ts_it = make_evaluation_predictions(
     dataset=test_ds,  # test dataset
     predictor=predictor,  # predictor
-    num_samples=100,  # number of sample paths we want for evaluation
+    num_samples=150,  # number of sample paths we want for evaluation
 )
 
 
@@ -109,16 +93,15 @@ def plot_forecasts(tss, forecasts, past_length, num_plots):
         forecast.plot(color='g')
         plt.grid(which='both')
         plt.legend(["observations", "median prediction", "90% confidence interval", "50% confidence interval"])
-        plt.title("Forecasting Air Temperature")
+        plt.title("Forecasting Ecosystem Respiration")
         plt.xlabel("Timestamp")
-        plt.ylabel("T_Air")
+        plt.ylabel("R_Eco")
         plt.show()
-
 
 forecasts = list(forecast_it)
 tss = list(ts_it)
 
-plot_forecasts(tss, forecasts, past_length=3000, num_plots=3)
+plot_forecasts(tss, forecasts, past_length=500, num_plots=1)
 
 
 evaluator = Evaluator(quantiles=[0.5], seasonality=2006)
