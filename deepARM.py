@@ -12,21 +12,14 @@ import netCDF
 from gluonts.distribution.multivariate_gaussian import MultivariateGaussianOutput
 
 from gluonts.evaluation.backtest import make_evaluation_predictions
-    
-        
-# Generate data 
 
-N = 20  # number of time series
-T = 1000  # number of timesteps
-dim = 2 # dimension of the observations
-prediction_length = 150
-freq = '1D'
+prediction_length = 172
+freq = '30min'
 
-
-#******************************************************************
+# ******************************************************************
 "Load NC data"
 nc_f = '/home/ahmad/PycharmProjects/deepCause/datasets/ncdata/DE-Hai.2000.2006.hourly.nc'  # Your filename
-nc_fid = Dataset(nc_f, 'r')   # Dataset is the class behavior to open the file                         # and create an instance of the ncCDF4 class
+nc_fid = Dataset(nc_f, 'r')  # Dataset is the class behavior to open the file                         # and create an instance of the ncCDF4 class
 nc_attrs, nc_dims, nc_vars = netCDF.ncdump(nc_fid);
 
 # Extract data from NetCDF file
@@ -44,22 +37,25 @@ hour = nc_fid.variables['hour'][:].ravel().data
 day = nc_fid.variables['day'][:].ravel().data
 month = nc_fid.variables['month'][:].ravel().data
 year = nc_fid.variables['year'][:].ravel().data
-#******************************************************************
-
+# ******************************************************************
 
 train_ds = ListDataset(
     [
-        {'target': reco[:15000], 'start': 0, 'dynamic_feat': tair_f[:15000]}
+        {'start': "01/01/2006 00:00:00", 'target': reco[1000:1672], 'cat': [0]},
+        {'start': "01/01/2006 00:00:00", 'target': tair_f[1000:1672], 'cat': [1]},
+        {'start': "01/01/2006 00:00:00", 'target': rg_f[1000:1672], 'cat': [2]},
+        {'start': "01/01/2006 00:00:00", 'target': gpp_f[1000:1672], 'cat': [3]}
     ],
     freq=freq
 )
 
-
-
 test_ds = ListDataset(
     [
-        {'target': reco[:15150], 'start': 0, 'dynamic_feat': tair_f[:15150]},
-],
+        {'start': "01/01/2006 00:00:00", 'target': reco[1000:1816], 'cat': [0]},
+        {'start': "01/01/2006 00:00:00", 'target': tair_f[1000:1816], 'cat': [1]},
+        {'start': "01/01/2006 00:00:00", 'target': rg_f[1000:1816], 'cat': [2]},
+        {'start': "01/01/2006 00:00:00", 'target': gpp_f[1000:1816], 'cat': [3]}
+    ],
     freq=freq
 )
 
@@ -83,25 +79,28 @@ predictor = estimator.train(train_ds)
 forecast_it, ts_it = make_evaluation_predictions(
     dataset=test_ds,  # test dataset
     predictor=predictor,  # predictor
-    num_samples=150,  # number of sample paths we want for evaluation
+    num_samples=172,  # number of sample paths we want for evaluation
 )
 
 
 def plot_forecasts(tss, forecasts, past_length, num_plots):
+    counter = 0
     for target, forecast in islice(zip(tss, forecasts), num_plots):
         ax = target[-past_length:].plot(figsize=(12, 5), linewidth=2)
         forecast.plot(color='g')
         plt.grid(which='both')
         plt.legend(["observations", "median prediction", "90% confidence interval", "50% confidence interval"])
-        plt.title("Forecasting Ecosystem Respiration")
+        plt.title("Forecasting " + titles[counter] + " time series")
         plt.xlabel("Timestamp")
-        plt.ylabel("R_Eco")
+        plt.ylabel(titles[counter])
         plt.show()
+        counter += 1
+
 
 forecasts = list(forecast_it)
 tss = list(ts_it)
-
-plot_forecasts(tss, forecasts, past_length=500, num_plots=1)
+titles = ['Reco', 'Temperature', 'Rg', 'GPP']
+plot_forecasts(tss, forecasts, past_length=600, num_plots=4)
 
 
 evaluator = Evaluator(quantiles=[0.5], seasonality=2006)
