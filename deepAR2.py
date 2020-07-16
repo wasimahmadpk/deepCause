@@ -39,7 +39,7 @@ time = nc_fid.variables['time'][:].ravel().data
 
 training_data = ListDataset(
     [{"start": 0, "target": reco[0:15000]}],
-    freq = "1D"
+    freq="1D"
 )
 
 estimator = DeepAREstimator(freq="1D", 
@@ -55,7 +55,7 @@ test_data = ListDataset(
         {"start": 0, "target": reco[0:15400]},
         {"start": 0, "target": reco[0:15600]}
     ],
-    freq = "1D"
+    freq="1D"
 )
 
 
