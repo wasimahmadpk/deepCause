@@ -21,14 +21,16 @@ epochs = 150
 training_length = 672  # 14 days data
 prediction_length = 144  # data for 3 days
 
-start = 50000
+start = 45000
 train_stop = start + training_length
 test_stop = train_stop + prediction_length
 
 # ******************************************************************
 "Load NC data"
 nc_f = '/home/ahmad/PycharmProjects/deepCause/datasets/ncdata/DE-Hai.2000.2006.hourly.nc'  # Your filename
-nc_fid = Dataset(nc_f, 'r')  # Dataset is the class behavior to open the file                         # and create an instance of the ncCDF4 class
+nc_fid = Dataset(nc_f, 'r')
+# Dataset is the class behavior to open the file
+# and create an instance of the ncCDF4 class
 nc_attrs, nc_dims, nc_vars = netCDF.ncdump(nc_fid);
 
 # Extract data from NetCDF file
@@ -61,7 +63,7 @@ train_ds = ListDataset(
 
 test_ds = ListDataset(
     [
-        {'start': "01/01/2006 00:00:00", 'target': reco[start:test_stop], 'cat': [0], 'dynamic_feat':[tair_f[start:test_stop], rg_f[start:test_stop], gpp_f[start:train_stop]]}
+        {'start': "01/01/2006 00:00:00", 'target': tair_f[start:test_stop], 'cat': [1], 'dynamic_feat':[reco[start:test_stop], rg_f[start:test_stop], gpp_f[start:train_stop]]}
     ],
     freq=freq
 )
@@ -76,19 +78,22 @@ estimator = DeepAREstimator(
     prediction_length=prediction_length,
     context_length=prediction_length,
     freq=freq,
+    num_layers=2,
+    num_cells=50,
     trainer=Trainer(
         ctx="cpu",
         epochs=epochs,
-        hybridize=True
+        hybridize=True,
     )
 )
 
 predictor = estimator.train(train_ds)
 print("Training complete:)")
+
 forecast_it, ts_it = make_evaluation_predictions(
     dataset=test_ds,  # test dataset
     predictor=predictor,  # predictor
-    num_samples=172,  # number of sample paths we want for evaluation
+    num_samples=prediction_length,  # number of sample paths we want for evaluation
 )
 
 
@@ -108,8 +113,9 @@ def plot_forecasts(tss, forecasts, past_length, num_plots):
 
 forecasts = list(forecast_it)
 tss = list(ts_it)
-titles = ['Reco', 'Temperature', 'Rg', 'GPP']
-plot_forecasts(tss, forecasts, past_length=600, num_plots=4)
+titles = ['Temperature']
+# titles = ['Reco', 'Temperature', 'Rg', 'GPP']
+plot_forecasts(tss, forecasts, past_length=500, num_plots=4)
 
 
 evaluator = Evaluator(quantiles=[0.5], seasonality=2006)
