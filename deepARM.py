@@ -14,11 +14,15 @@ from gluonts.distribution.multivariate_gaussian import MultivariateGaussianOutpu
 from gluonts.evaluation.backtest import make_evaluation_predictions
 
 # Parameters
-prediction_length = 172
+
 freq = '30min'
-epochs = 100
-start = 45000
-train_stop = start + 672
+epochs = 150
+
+training_length = 672  # 14 days data
+prediction_length = 144  # data for 3 days
+
+start = 50000
+train_stop = start + training_length
 test_stop = train_stop + prediction_length
 
 # ******************************************************************
