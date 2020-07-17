@@ -16,7 +16,7 @@ from gluonts.evaluation.backtest import make_evaluation_predictions
 # Parameters
 
 freq = '30min'
-epochs = 10
+epochs = 50
 
 training_length = 672  # 14 days data
 prediction_length = 144  # data for 3 days
@@ -52,7 +52,7 @@ year = nc_fid.variables['year'][:].ravel().data
 
 mtseries = np.concatenate((reco, tair_f, rg_f, gpp_f), axis=0)
 
-train_ds = ListDataset([{'start': '2006-01-01 00:00:00', 'target': mtseries}], freq=freq)
+train_ds = ListDataset([{'start': '2006-01-01 00:00:00', 'target': mtseries[start:train_stop]}], freq=freq)
 
 # train_ds = ListDataset(
 #     [
@@ -93,7 +93,7 @@ estimator = DeepAREstimator(
     trainer=Trainer(
         ctx="cpu",
         epochs=epochs,
-        hybridize=True,
+        hybridize=True
     )
 )
 
@@ -125,7 +125,7 @@ forecasts = list(forecast_it)
 tss = list(ts_it)
 titles = ['Temperature']
 # titles = ['Reco', 'Temperature', 'Rg', 'GPP']
-plot_forecasts(tss, forecasts, past_length=1500, num_plots=4)
+plot_forecasts(tss, forecasts, past_length=600, num_plots=4)
 
 
 evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9], seasonality=2006)
