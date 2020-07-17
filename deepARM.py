@@ -16,7 +16,7 @@ from gluonts.evaluation.backtest import make_evaluation_predictions
 # Parameters
 
 freq = '30min'
-epochs = 100
+epochs = 4
 
 training_length = 672  # 14 days data
 prediction_length = 144  # data for 3 days
