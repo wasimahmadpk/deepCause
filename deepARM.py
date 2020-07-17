@@ -16,12 +16,12 @@ from gluonts.evaluation.backtest import make_evaluation_predictions
 # Parameters
 
 freq = '30min'
-epochs = 50
+epochs = 100
 
 training_length = 672  # 14 days data
 prediction_length = 144  # data for 3 days
 
-start = 7000
+start = 25000
 train_stop = start + training_length
 test_stop = train_stop + prediction_length
 
@@ -50,10 +50,6 @@ month = nc_fid.variables['month'][:].ravel().data
 year = nc_fid.variables['year'][:].ravel().data
 # ******************************************************************
 
-mtseries = np.concatenate((reco, tair_f, rg_f, gpp_f), axis=0)
-
-train_ds = ListDataset([{'start': '2006-01-01 00:00:00', 'target': mtseries[start:train_stop]}], freq=freq)
-
 # train_ds = ListDataset(
 #     [
 #         {'start': "01/01/2006 00:00:00", 'target': reco[start:train_stop], 'cat': [0], 'dynamic_feat':[tair_f[start:train_stop], rg_f[start:train_stop], gpp_f[start:train_stop]]},
@@ -64,19 +60,25 @@ train_ds = ListDataset([{'start': '2006-01-01 00:00:00', 'target': mtseries[star
 #     freq=freq
 # )
 
-test_ds = ListDataset(
+train_ds = ListDataset(
     [
-        {'start': "01/01/2006 00:00:00", 'target': tair_f[start:test_stop]}
+        {'start': "01/01/2006 00:00:00", 'target': reco[start:train_stop], 'cat': [0]},
+        {'start': "01/01/2006 00:00:00", 'target': tair_f[start:train_stop], 'cat': [1]},
+        {'start': "01/01/2006 00:00:00", 'target': rg_f[start:train_stop], 'cat': [2]},
+        {'start': "01/01/2006 00:00:00", 'target': gpp_f[start:train_stop], 'cat': [3]}
     ],
     freq=freq
 )
 
-# test_ds = ListDataset(
-#     [
-#         {'start': "01/01/2006 00:00:00", 'target': tair_f[start:test_stop], 'cat': [1], 'dynamic_feat':[reco[start:test_stop], rg_f[start:test_stop], gpp_f[start:train_stop]]}
-#     ],
-#     freq=freq
-# )
+test_ds = ListDataset(
+    [
+        {'start': "01/01/2006 00:00:00", 'target': reco[start:test_stop], 'cat': [0]},
+        {'start': "01/01/2006 00:00:00", 'target': tair_f[start:test_stop], 'cat': [1]},
+        {'start': "01/01/2006 00:00:00", 'target': rg_f[start:test_stop], 'cat': [2]},
+        {'start': "01/01/2006 00:00:00", 'target': gpp_f[start:test_stop], 'cat': [3]}
+    ],
+    freq=freq
+)
 
 # {'start': "01/01/2006 00:00:00", 'target': reco[start:test_stop], 'cat': [0], 'dynamic_feat':[tair_f[start:test_stop], rg_f[start:test_stop], gpp_f[start:train_stop]]},
 # {'start': "01/01/2006 00:00:00", 'target': tair_f[start:test_stop], 'cat': [1], 'dynamic_feat':[reco[start:test_stop], rg_f[start:test_stop], gpp_f[start:train_stop]]},
@@ -123,10 +125,9 @@ def plot_forecasts(tss, forecasts, past_length, num_plots):
 
 forecasts = list(forecast_it)
 tss = list(ts_it)
-titles = ['Temperature']
-# titles = ['Reco', 'Temperature', 'Rg', 'GPP']
+# titles = ['Temperature']
+titles = ['Reco', 'Temperature', 'Rg', 'GPP']
 plot_forecasts(tss, forecasts, past_length=600, num_plots=4)
-
 
 evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9], seasonality=2006)
 
