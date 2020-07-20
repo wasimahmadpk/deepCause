@@ -72,7 +72,7 @@ train_ds = ListDataset(
 test_ds = ListDataset(
     [
         {'start': "01/01/2006 00:00:00", 'target': tair_f[start:train_stop], 'cat': [1],
-         'dynamic_feat': [tair_f[start:test_stop]]}
+         'dynamic_feat': [reco[start:test_stop]]}
     ],
     freq=freq
 )
