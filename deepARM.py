@@ -16,12 +16,12 @@ from gluonts.evaluation.backtest import make_evaluation_predictions
 # Parameters
 
 freq = '30min'
-epochs = 4
+epochs = 100
 
-training_length = 672  # 14 days data
-prediction_length = 144  # data for 3 days
+training_length = 1008  # data for 3 weeks
+prediction_length = 144  # dat for 3 days
 
-start = 25000
+start = 29000
 train_stop = start + training_length
 test_stop = train_stop + prediction_length
 
@@ -62,20 +62,17 @@ year = nc_fid.variables['year'][:].ravel().data
 
 train_ds = ListDataset(
     [
-        {'start': "01/01/2006 00:00:00", 'target': reco[start:train_stop], 'cat': [0]},
-        {'start': "01/01/2006 00:00:00", 'target': tair_f[start:train_stop], 'cat': [1]},
-        {'start': "01/01/2006 00:00:00", 'target': rg_f[start:train_stop], 'cat': [2]},
-        {'start': "01/01/2006 00:00:00", 'target': gpp_f[start:train_stop], 'cat': [3]}
+        {'start': "01/01/2006 00:00:00", 'target': reco[start:train_stop], 'cat': [0], 'dynamic_feat':[tair_f[start:train_stop]]},
+        {'start': "01/01/2006 00:00:00", 'target': tair_f[start:train_stop], 'cat': [1], 'dynamic_feat':[reco[start:train_stop]]}
     ],
     freq=freq
 )
 
+
 test_ds = ListDataset(
     [
-        {'start': "01/01/2006 00:00:00", 'target': reco[start:test_stop], 'cat': [0]},
-        {'start': "01/01/2006 00:00:00", 'target': tair_f[start:test_stop], 'cat': [1]},
-        {'start': "01/01/2006 00:00:00", 'target': rg_f[start:test_stop], 'cat': [2]},
-        {'start': "01/01/2006 00:00:00", 'target': gpp_f[start:test_stop], 'cat': [3]}
+        {'start': "01/01/2006 00:00:00", 'target': tair_f[start:train_stop], 'cat': [1],
+         'dynamic_feat': [tair_f[start:test_stop]]}
     ],
     freq=freq
 )
@@ -125,11 +122,11 @@ def plot_forecasts(tss, forecasts, past_length, num_plots):
 
 forecasts = list(forecast_it)
 tss = list(ts_it)
-# titles = ['Temperature']
-titles = ['Reco', 'Temperature', 'Rg', 'GPP']
-plot_forecasts(tss, forecasts, past_length=600, num_plots=4)
+titles = ['Temperature']
+# titles = ['Reco', 'Temperature', 'Rg', 'GPP']
+plot_forecasts(tss, forecasts, past_length=600, num_plots=2)
 
-evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9], seasonality=2006)
+evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
 
 agg_metrics, item_metrics = evaluator(iter(tss), iter(forecasts), num_series=len(test_ds))
 print("Performance metrices", agg_metrics)
