@@ -2,7 +2,9 @@ from gluonts.dataset import common
 from gluonts.model import deepstate
 from gluonts.trainer import Trainer
 from gluonts.evaluation import Evaluator
+from gluonts.evaluation.backtest import make_evaluation_predictions
 from netCDF4 import Dataset
+from itertools import islice
 import confidence
 import numpy as np
 import crps
@@ -28,37 +30,58 @@ le_f = nc_fid.variables['LE_f'][:].ravel().data
 h_f = nc_fid.variables['H_f'][:].ravel().data
 time = nc_fid.variables['time'][:].ravel().data
 
-data = common.ListDataset(
-    [{"start": 0, "target": tair_f[:40050]}],
-    freq="60min")
+# Parameters
+freq = '30min'
+epochs = 10
 
-trainer = Trainer(epochs=2)
+training_length = 1008  # data for 3 weeks
+prediction_length = 144  # dat for 3 days
+
+start = 29000
+train_stop = start + training_length
+test_stop = train_stop + prediction_length
+
+train_data = common.ListDataset(
+    [{"start": '2006-01-01 00:00:00', "target": reco[start: train_stop]}],
+    freq=freq)
+
+test_data = common.ListDataset(
+    [{"start": '2006-01-01 00:00:00', "target": reco[start: test_stop]}],
+    freq=freq)
+
+trainer = Trainer(epochs=epochs, hybridize=True)
 estimator = deepstate.DeepStateEstimator(
-    freq="60min", prediction_length=24, trainer=trainer)
-predictor = estimator.train(training_data=data)
+    freq=freq, prediction_length=prediction_length, cardinality=[2], use_feat_static_cat= False, trainer=trainer)
+predictor = estimator.train(training_data=train_data)
 
-actual = tair_f[40050:40074]
-prediction = next(predictor.predict(data))
-eval = Evaluator()
-forecast = prediction.mean
+forecast_it, ts_it = make_evaluation_predictions(
+    dataset=test_data,  # test dataset
+    predictor=predictor,  # predictor
+    num_samples=prediction_length,  # number of sample paths we want for evaluation
+)
 
-print(prediction.mean)
-print("MAPE: ", eval.mape(actual, forecast))
-print("MSE: ", eval.mse(actual, forecast))
-print("CRPS: ", crps.calc_crps(forecast, actual))
 
-plt.title('Forecasting Air temperature-95% PI')
-plt.ylabel('T_Air')
-plt.xlabel('Hour of the day')
-prediction.plot(prediction_intervals=(0, 95), color='g', output_file='/home/ahmad/PycharmProjects/deepCause/plots/graph.png')
-plt.plot(actual)
-actual, lower, upper = confidence.mean_confidence_interval(actual, 0.95)
-compare_df = pd.DataFrame({'Actual': actual, 'Upper bound': upper, 'Lower bound': lower, 'Forecast': forecast})
+def plot_forecasts(tss, forecasts, past_length, num_plots):
+    counter = 0
+    for target, forecast in islice(zip(tss, forecasts), num_plots):
+        ax = target[-past_length:].plot(figsize=(12, 5), linewidth=2)
+        forecast.plot(color='g')
+        plt.grid(which='both')
+        plt.legend(["observations", "median prediction", "90% confidence interval", "50% confidence interval"])
+        plt.title("Forecasting " + titles[counter] + " time series")
+        plt.xlabel("Timestamp")
+        plt.ylabel(titles[counter])
+        plt.show()
+        counter += 1
 
-# plot the two vectors
-ax = compare_df.plot(colormap='jet', marker='.', markersize=10, title='Forecasting Air Temperature-95% CI')
-ax.set_xlabel("Hour of the day")
-ax.set_ylabel("T_Air")
-plt.show()
-fig = ax.get_figure()
-fig.savefig("/home/ahmad/PycharmProjects/deepCause/plots/compare.png")
+
+forecasts = list(forecast_it)
+tss = list(ts_it)
+titles = ['Reco', 'Temperature']
+# titles = ['Reco', 'Temperature', 'Rg', 'GPP']
+plot_forecasts(tss, forecasts, past_length=600, num_plots=2)
+
+evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
+
+agg_metrics, item_metrics = evaluator(iter(tss), iter(forecasts), num_series=len(test_data))
+print("Performance metrices", agg_metrics)
