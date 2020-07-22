@@ -14,7 +14,6 @@ from gluonts.distribution.multivariate_gaussian import MultivariateGaussianOutpu
 from gluonts.evaluation.backtest import make_evaluation_predictions
 
 # Parameters
-
 freq = '30min'
 epochs = 100
 
@@ -71,6 +70,8 @@ train_ds = ListDataset(
 
 test_ds = ListDataset(
     [
+        {'start': "01/01/2006 00:00:00", 'target': reco[start:train_stop], 'cat': [0],
+         'dynamic_feat': [tair_f[start:test_stop]]},
         {'start': "01/01/2006 00:00:00", 'target': tair_f[start:train_stop], 'cat': [1],
          'dynamic_feat': [reco[start:test_stop]]}
     ],
@@ -122,7 +123,7 @@ def plot_forecasts(tss, forecasts, past_length, num_plots):
 
 forecasts = list(forecast_it)
 tss = list(ts_it)
-titles = ['Temperature']
+titles = ['Reco', 'Temperature']
 # titles = ['Reco', 'Temperature', 'Rg', 'GPP']
 plot_forecasts(tss, forecasts, past_length=600, num_plots=2)
 
