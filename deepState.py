@@ -32,7 +32,7 @@ time = nc_fid.variables['time'][:].ravel().data
 
 # Parameters
 freq = '30min'
-epochs = 10
+epochs = 50
 
 training_length = 1008  # data for 3 weeks
 prediction_length = 144  # dat for 3 days
