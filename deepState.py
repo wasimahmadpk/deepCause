@@ -32,7 +32,7 @@ time = nc_fid.variables['time'][:].ravel().data
 
 # Parameters
 freq = '30min'
-epochs = 50
+epochs = 25
 
 training_length = 1008  # data for 3 weeks
 prediction_length = 144  # dat for 3 days
@@ -42,11 +42,17 @@ train_stop = start + training_length
 test_stop = train_stop + prediction_length
 
 train_data = common.ListDataset(
-    [{"start": '2006-01-01 00:00:00', "target": reco[start: train_stop]}],
+    [
+        {'start': "01/01/2006 00:00:00", 'target': reco[start:train_stop], 'cat': [0],
+         'dynamic_feat': [tair_f[start:train_stop]]}
+    ],
     freq=freq)
 
 test_data = common.ListDataset(
-    [{"start": '2006-01-01 00:00:00', "target": reco[start: test_stop]}],
+    [
+        {'start': "01/01/2006 00:00:00", 'target': reco[start:test_stop], 'cat': [0],
+         'dynamic_feat': [tair_f[start:test_stop]]}
+    ],
     freq=freq)
 
 trainer = Trainer(epochs=epochs, hybridize=True)
