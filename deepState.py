@@ -13,26 +13,26 @@ import matplotlib.pyplot as plt
 import netCDF
 
 
-"Load NC data"
+"Load fluxnet data"
 nc_f = '/home/ahmad/PycharmProjects/deepCause/datasets/ncdata/DE-Hai.2000.2006.hourly.nc'  # Your filename
 nc_fid = Dataset(nc_f, 'r')   # Dataset is the class behavior to open the file                         # and create an instance of the ncCDF4 class
 nc_attrs, nc_dims, nc_vars = netCDF.ncdump(nc_fid);
 
 # Extract data from NetCDF file
-vpd_f = nc_fid.variables['VPD_f'][:].ravel().data  # extract/copy the data
-tair_f = nc_fid.variables['Tair_f'][:].ravel().data
-rg_f = nc_fid.variables['Rg_f'][:].ravel().data
-swc1_f = nc_fid.variables['SWC1_f'][:].ravel().data
-nee_f = nc_fid.variables['NEE_f'][:].ravel().data
-gpp_f = nc_fid.variables['GPP_f'][:].ravel().data
+vpd = nc_fid.variables['VPD_f'][:].ravel().data  # extract/copy the data
+temp = nc_fid.variables['Tair_f'][:].ravel().data
+rg = nc_fid.variables['Rg_f'][:].ravel().data
+swc1 = nc_fid.variables['SWC1_f'][:].ravel().data
+nee = nc_fid.variables['NEE_f'][:].ravel().data
+gpp = nc_fid.variables['GPP_f'][:].ravel().data
 reco = nc_fid.variables['Reco'][:].ravel().data
-le_f = nc_fid.variables['LE_f'][:].ravel().data
-h_f = nc_fid.variables['H_f'][:].ravel().data
+le = nc_fid.variables['LE_f'][:].ravel().data
+h = nc_fid.variables['H_f'][:].ravel().data
 time = nc_fid.variables['time'][:].ravel().data
 
 # Parameters
 freq = '30min'
-epochs = 2
+epochs = 20
 
 training_length = 1008  # data for 3 weeks
 prediction_length = 144  # dat for 3 days
@@ -44,7 +44,7 @@ test_stop = train_stop + prediction_length
 train_data = common.ListDataset(
     [
         {'start': "01/01/2006 00:00:00", 'target': reco[start:train_stop],
-         'dynamic_feat': [tair_f[start:train_stop], rg_f[start:train_stop], vpd_f[start:train_stop]],
+         'dynamic_feat': [temp[start:train_stop], rg[start:train_stop], vpd[start:train_stop]],
          'cat': [0]}
     ],
     freq=freq)
@@ -52,14 +52,14 @@ train_data = common.ListDataset(
 test_data = common.ListDataset(
     [
         {'start': "01/01/2006 00:00:00", 'target': reco[start:test_stop],
-         'dynamic_feat': [tair_f[start:test_stop], rg_f[start:test_stop], vpd_f[start:test_stop]],
+         'dynamic_feat': [temp[start:test_stop], rg[start:test_stop], vpd[start:test_stop]],
          'cat': [0]}
     ],
     freq=freq)
 
 trainer = Trainer(epochs=epochs, hybridize=True)
 estimator = deepstate.DeepStateEstimator(
-    freq=freq, prediction_length=prediction_length, cardinality=[2], use_feat_static_cat= False, trainer=trainer)
+    freq=freq, prediction_length=prediction_length, cardinality=[2], use_feat_static_cat=False, trainer=trainer)
 predictor = estimator.train(training_data=train_data)
 
 
