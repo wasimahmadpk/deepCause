@@ -15,7 +15,7 @@ from gluonts.evaluation.backtest import make_evaluation_predictions
 
 # Parameters
 freq = '30min'
-epochs = 50
+epochs = 10
 
 training_length = 1008  # data for 3 weeks
 prediction_length = 144  # dat for 3 days
@@ -33,15 +33,15 @@ nc_fid = Dataset(nc_f, 'r')
 nc_attrs, nc_dims, nc_vars = netCDF.ncdump(nc_fid);
 
 # Extract data from NetCDF file
-vpd_f = nc_fid.variables['VPD_f'][:].ravel().data  # extract/copy the data
-tair_f = nc_fid.variables['Tair_f'][:].ravel().data
-rg_f = nc_fid.variables['Rg_f'][:].ravel().data
-swc1_f = nc_fid.variables['SWC1_f'][:].ravel().data
-nee_f = nc_fid.variables['NEE_f'][:].ravel().data
-gpp_f = nc_fid.variables['GPP_f'][:].ravel().data
+vpd = nc_fid.variables['VPD_f'][:].ravel().data  # extract/copy the data
+temp = nc_fid.variables['Tair_f'][:].ravel().data
+rg = nc_fid.variables['Rg_f'][:].ravel().data
+swc1 = nc_fid.variables['SWC1_f'][:].ravel().data
+nee = nc_fid.variables['NEE_f'][:].ravel().data
+gpp = nc_fid.variables['GPP_f'][:].ravel().data
 reco = nc_fid.variables['Reco'][:].ravel().data
-le_f = nc_fid.variables['LE_f'][:].ravel().data
-h_f = nc_fid.variables['H_f'][:].ravel().data
+le = nc_fid.variables['LE_f'][:].ravel().data
+h = nc_fid.variables['H_f'][:].ravel().data
 time = nc_fid.variables['time'][:].ravel().data
 hour = nc_fid.variables['hour'][:].ravel().data
 day = nc_fid.variables['day'][:].ravel().data
@@ -49,21 +49,16 @@ month = nc_fid.variables['month'][:].ravel().data
 year = nc_fid.variables['year'][:].ravel().data
 # ******************************************************************
 
-# train_ds = ListDataset(
-#     [
-#         {'start': "01/01/2006 00:00:00", 'target': reco[start:train_stop], 'cat': [0], 'dynamic_feat':[tair_f[start:train_stop], rg_f[start:train_stop], gpp_f[start:train_stop]]},
-#         {'start': "01/01/2006 00:00:00", 'target': tair_f[start:train_stop], 'cat': [1], 'dynamic_feat':[reco[start:train_stop], rg_f[start:train_stop], gpp_f[start:train_stop]]},
-#         {'start': "01/01/2006 00:00:00", 'target': rg_f[start:train_stop], 'cat': [2], 'dynamic_feat':[reco[start:train_stop], tair_f[start:train_stop], gpp_f[start:train_stop]]},
-#         {'start': "01/01/2006 00:00:00", 'target': gpp_f[start:train_stop], 'cat': [3], 'dynamic_feat':[reco[start:train_stop], tair_f[start:train_stop], rg_f[start:train_stop]]}
-#     ],
-#     freq=freq
-# )
-
 train_ds = ListDataset(
     [
-        {'start': "01/01/2006 00:00:00", 'target': reco[start:train_stop],
-         'dynamic_feat':[tair_f[start:train_stop]],
-         'cat': [0]}
+        {'start': "01/01/2006 00:00:00", 'target': reco[start:train_stop], 'cat': [0],
+         'dynamic_feat':[temp[start:train_stop], rg[start:train_stop], gpp[start:train_stop]]},
+        # {'start': "01/01/2006 00:00:00", 'target': temp[start:train_stop], 'cat': [1],
+        #  'dynamic_feat':[reco[start:train_stop], rg[start:train_stop], gpp[start:train_stop]]},
+        # {'start': "01/01/2006 00:00:00", 'target': rg[start:train_stop], 'cat': [2],
+        #  'dynamic_feat':[reco[start:train_stop], temp[start:train_stop], gpp[start:train_stop]]},
+        # {'start': "01/01/2006 00:00:00", 'target': gpp[start:train_stop], 'cat': [3],
+        #  'dynamic_feat':[reco[start:train_stop], temp[start:train_stop], rg[start:train_stop]]}
     ],
     freq=freq
 )
@@ -71,17 +66,19 @@ train_ds = ListDataset(
 
 test_ds = ListDataset(
     [
-        {'start': "01/01/2006 00:00:00", 'target': reco[start:test_stop],
-         'dynamic_feat': [tair_f[start:test_stop]],
-         'cat': [0]}
+        {'start': "01/01/2006 00:00:00", 'target': reco[start:test_stop], 'cat': [0],
+         'dynamic_feat': [temp[start:test_stop], rg[start:test_stop], gpp[start:train_stop]]},
+        # {'start': "01/01/2006 00:00:00", 'target': temp[start:test_stop], 'cat': [1],
+        #  'dynamic_feat': [reco[start:test_stop], rg[start:test_stop], gpp[start:train_stop]]},
+        # {'start': "01/01/2006 00:00:00", 'target': rg[start:test_stop], 'cat': [2],
+        #  'dynamic_feat': [reco[start:test_stop], temp[start:train_stop], gpp[start:train_stop]]},
+        # {'start': "01/01/2006 00:00:00", 'target': gpp[start:test_stop], 'cat': [3],
+        #  'dynamic_feat': [reco[start:test_stop], temp[start:train_stop], rg[start:train_stop]]}
+
     ],
     freq=freq
 )
 
-# {'start': "01/01/2006 00:00:00", 'target': reco[start:test_stop], 'cat': [0], 'dynamic_feat':[tair_f[start:test_stop], rg_f[start:test_stop], gpp_f[start:train_stop]]},
-# {'start': "01/01/2006 00:00:00", 'target': tair_f[start:test_stop], 'cat': [1], 'dynamic_feat':[reco[start:test_stop], rg_f[start:test_stop], gpp_f[start:train_stop]]},
-#         {'start': "01/01/2006 00:00:00", 'target': rg_f[start:test_stop], 'cat': [2], 'dynamic_feat':[reco[start:test_stop], tair_f[start:train_stop], gpp_f[start:train_stop]]},
-#         {'start': "01/01/2006 00:00:00", 'target': gpp_f[start:test_stop], 'cat': [3], 'dynamic_feat':[reco[start:test_stop], tair_f[start:train_stop], rg_f[start:train_stop]]}
 
 # create estimator
 estimator = DeepAREstimator(
@@ -98,7 +95,6 @@ estimator = DeepAREstimator(
 )
 
 predictor = estimator.train(train_ds)
-print("Training complete:)")
 
 forecast_it, ts_it = make_evaluation_predictions(
     dataset=test_ds,  # test dataset
@@ -123,9 +119,8 @@ def plot_forecasts(tss, forecasts, past_length, num_plots):
 
 forecasts = list(forecast_it)
 tss = list(ts_it)
-titles = ['Reco', 'Temperature']
-# titles = ['Reco', 'Temperature', 'Rg', 'GPP']
-plot_forecasts(tss, forecasts, past_length=600, num_plots=2)
+titles = ['Reco', 'Temperature', 'Rg', 'GPP']
+plot_forecasts(tss, forecasts, past_length=600, num_plots=4)
 
 evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
 
