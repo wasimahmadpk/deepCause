@@ -32,7 +32,7 @@ time = nc_fid.variables['time'][:].ravel().data
 
 # Parameters
 freq = '30min'
-epochs = 25
+epochs = 2
 
 training_length = 1008  # data for 3 weeks
 prediction_length = 144  # dat for 3 days
@@ -43,15 +43,17 @@ test_stop = train_stop + prediction_length
 
 train_data = common.ListDataset(
     [
-        {'start': "01/01/2006 00:00:00", 'target': reco[start:train_stop], 'cat': [0],
-         'dynamic_feat': [tair_f[start:train_stop]]}
+        {'start': "01/01/2006 00:00:00", 'target': reco[start:train_stop],
+         'dynamic_feat': [tair_f[start:train_stop], rg_f[start:train_stop], vpd_f[start:train_stop]],
+         'cat': [0]}
     ],
     freq=freq)
 
 test_data = common.ListDataset(
     [
-        {'start': "01/01/2006 00:00:00", 'target': reco[start:test_stop], 'cat': [0],
-         'dynamic_feat': [tair_f[start:test_stop]]}
+        {'start': "01/01/2006 00:00:00", 'target': reco[start:test_stop],
+         'dynamic_feat': [tair_f[start:test_stop], rg_f[start:test_stop], vpd_f[start:test_stop]],
+         'cat': [0]}
     ],
     freq=freq)
 
@@ -59,6 +61,7 @@ trainer = Trainer(epochs=epochs, hybridize=True)
 estimator = deepstate.DeepStateEstimator(
     freq=freq, prediction_length=prediction_length, cardinality=[2], use_feat_static_cat= False, trainer=trainer)
 predictor = estimator.train(training_data=train_data)
+
 
 forecast_it, ts_it = make_evaluation_predictions(
     dataset=test_data,  # test dataset
