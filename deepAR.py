@@ -15,7 +15,7 @@ from gluonts.evaluation.backtest import make_evaluation_predictions
 
 # Parameters
 freq = '30min'
-epochs = 10
+epochs = 50
 
 training_length = 1008  # data for 3 weeks
 prediction_length = 144  # dat for 3 days
@@ -25,7 +25,7 @@ train_stop = start + training_length
 test_stop = train_stop + prediction_length
 
 # ******************************************************************
-"Load NC data"
+"Load fluxnet data"
 nc_f = '/home/ahmad/PycharmProjects/deepCause/datasets/ncdata/DE-Hai.2000.2006.hourly.nc'  # Your filename
 nc_fid = Dataset(nc_f, 'r')
 # Dataset is the class behavior to open the file
@@ -62,7 +62,7 @@ year = nc_fid.variables['year'][:].ravel().data
 train_ds = ListDataset(
     [
         {'start': "01/01/2006 00:00:00", 'target': reco[start:train_stop],
-         'dynamic_feat':[tair_f[start:train_stop], rg_f[start:train_stop], vpd_f[start:train_stop]],
+         'dynamic_feat':[tair_f[start:train_stop]],
          'cat': [0]}
     ],
     freq=freq
@@ -72,7 +72,7 @@ train_ds = ListDataset(
 test_ds = ListDataset(
     [
         {'start': "01/01/2006 00:00:00", 'target': reco[start:test_stop],
-         'dynamic_feat': [tair_f[start:test_stop], rg_f[start:test_stop], vpd_f[start:test_stop]],
+         'dynamic_feat': [tair_f[start:test_stop]],
          'cat': [0]}
     ],
     freq=freq
