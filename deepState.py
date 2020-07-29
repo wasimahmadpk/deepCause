@@ -32,7 +32,7 @@ time = nc_fid.variables['time'][:].ravel().data
 
 # Parameters
 freq = '30min'
-epochs = 20
+epochs = 100
 
 training_length = 1008  # data for 3 weeks
 prediction_length = 144  # dat for 3 days
@@ -59,9 +59,9 @@ test_data = common.ListDataset(
 
 trainer = Trainer(epochs=epochs, hybridize=True)
 estimator = deepstate.DeepStateEstimator(
-    freq=freq, prediction_length=prediction_length, cardinality=[2], use_feat_static_cat=False, trainer=trainer)
+    freq=freq, prediction_length=prediction_length, cardinality=[2],
+    use_feat_static_cat=False, trainer=trainer)
 predictor = estimator.train(training_data=train_data)
-
 
 forecast_it, ts_it = make_evaluation_predictions(
     dataset=test_data,  # test dataset
@@ -90,7 +90,7 @@ titles = ['Reco', 'Temperature']
 # titles = ['Reco', 'Temperature', 'Rg', 'GPP']
 plot_forecasts(tss, forecasts, past_length=600, num_plots=2)
 
-evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
+evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9], seasonality=48)
 
 agg_metrics, item_metrics = evaluator(iter(tss), iter(forecasts), num_series=len(test_data))
 print("Performance metrices", agg_metrics)
