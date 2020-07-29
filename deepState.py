@@ -45,7 +45,7 @@ train_data = common.ListDataset(
     [
         {'start': "01/01/2006 00:00:00", 'target': reco[start:train_stop],
          'dynamic_feat': [temp[start:train_stop], rg[start:train_stop], vpd[start:train_stop]],
-         'cat': [0]}
+         }
     ],
     freq=freq)
 
@@ -53,7 +53,7 @@ test_data = common.ListDataset(
     [
         {'start': "01/01/2006 00:00:00", 'target': reco[start:test_stop],
          'dynamic_feat': [temp[start:test_stop], rg[start:test_stop], vpd[start:test_stop]],
-         'cat': [0]}
+        }
     ],
     freq=freq)
 
