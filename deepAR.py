@@ -91,7 +91,7 @@ estimator = DeepAREstimator(
         ctx="cpu",
         epochs=epochs,
         hybridize=True,
-        batch_size=336
+        batch_size=96
     )
 )
 
