@@ -8,17 +8,15 @@ from gluonts.model.deepar import DeepAREstimator
 from gluonts.trainer import Trainer
 from netCDF4 import Dataset
 import netCDF
-
 from gluonts.distribution.multivariate_gaussian import MultivariateGaussianOutput
-
 from gluonts.evaluation.backtest import make_evaluation_predictions
 
 # Parameters
 freq = '30min'
 epochs = 100
 
-training_length = 2880  # data for 2 months (July-August)
-prediction_length = 144  # dat for 3 days
+training_length = 1440  # data for 1 month (July)
+prediction_length = 144  # data for 3 days
 
 start = 8735
 train_stop = start + training_length
@@ -51,8 +49,8 @@ year = nc_fid.variables['year'][:].ravel().data
 
 train_ds = ListDataset(
     [
-         {'start': "01/07/2006 00:00:00", 'target': reco[start:train_stop]}
-         # 'dynamic_feat':[temp[start:train_stop], rg[start:train_stop], gpp[start:train_stop]]},
+         {'start': "07/01/2006 00:00:00", 'target': reco[start:train_stop],
+          'dynamic_feat':[temp[start:train_stop]]}
         # {'start': "01/01/2006 00:00:00", 'target': temp[start:train_stop], 'cat': [1],
         #  'dynamic_feat':[reco[start:train_stop], rg[start:train_stop], gpp[start:train_stop]]},
         # {'start': "01/01/2006 00:00:00", 'target': rg[start:train_stop], 'cat': [2],
@@ -63,11 +61,10 @@ train_ds = ListDataset(
     freq=freq
 )
 
-
 test_ds = ListDataset(
     [
-        {'start': "01/07/2006 00:00:00", 'target': reco[start:test_stop]}
-         # 'dynamic_feat': [temp[start:test_stop], rg[start:test_stop], gpp[start:train_stop]]},
+        {'start': "07/01/2006 00:00:00", 'target': reco[start:test_stop],
+        'dynamic_feat':[temp[start:train_stop]]}
         # {'start': "01/01/2006 00:00:00", 'target': temp[start:test_stop], 'cat': [1],
         #  'dynamic_feat': [reco[start:test_stop], rg[start:test_stop], gpp[start:train_stop]]},
         # {'start': "01/01/2006 00:00:00", 'target': rg[start:test_stop], 'cat': [2],
