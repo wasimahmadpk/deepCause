@@ -15,10 +15,10 @@ from gluonts.evaluation.backtest import make_evaluation_predictions
 freq = '30min'
 epochs = 100
 
-training_length = 1440  # data for 1 month (July)
+training_length = 1500  # data for 1 month (July)
 prediction_length = 144  # data for 3 days
 
-start = 8735
+start = 26000
 train_stop = start + training_length
 test_stop = train_stop + prediction_length
 
@@ -64,7 +64,7 @@ train_ds = ListDataset(
 test_ds = ListDataset(
     [
         {'start': "07/01/2006 00:00:00", 'target': reco[start:test_stop],
-        'dynamic_feat':[temp[start:train_stop]]}
+         'dynamic_feat':[temp[start:train_stop]]}
         # {'start': "01/01/2006 00:00:00", 'target': temp[start:test_stop], 'cat': [1],
         #  'dynamic_feat': [reco[start:test_stop], rg[start:test_stop], gpp[start:train_stop]]},
         # {'start': "01/01/2006 00:00:00", 'target': rg[start:test_stop], 'cat': [2],
@@ -88,7 +88,7 @@ estimator = DeepAREstimator(
         ctx="cpu",
         epochs=epochs,
         hybridize=True,
-        batch_size=48
+        batch_size=32
     )
 )
 
@@ -99,7 +99,6 @@ forecast_it, ts_it = make_evaluation_predictions(
     predictor=predictor,  # predictor
     num_samples=prediction_length,  # number of sample paths we want for evaluation
 )
-
 
 def plot_forecasts(tss, forecasts, past_length, num_plots):
     counter = 0
