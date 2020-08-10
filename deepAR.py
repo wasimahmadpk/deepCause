@@ -15,7 +15,7 @@ from gluonts.evaluation.backtest import make_evaluation_predictions
 
 # Parameters
 freq = '30min'
-epochs = 10
+epochs = 100
 
 training_length = 2880  # data for 2 months (July-August)
 prediction_length = 144  # dat for 3 days
@@ -51,7 +51,7 @@ year = nc_fid.variables['year'][:].ravel().data
 
 train_ds = ListDataset(
     [
-         {'start': "01/01/2006 00:00:00", 'target': reco[start:train_stop], 'cat': [0]}
+         {'start': "01/07/2006 00:00:00", 'target': reco[start:train_stop]}
          # 'dynamic_feat':[temp[start:train_stop], rg[start:train_stop], gpp[start:train_stop]]},
         # {'start': "01/01/2006 00:00:00", 'target': temp[start:train_stop], 'cat': [1],
         #  'dynamic_feat':[reco[start:train_stop], rg[start:train_stop], gpp[start:train_stop]]},
@@ -66,7 +66,7 @@ train_ds = ListDataset(
 
 test_ds = ListDataset(
     [
-        {'start': "01/01/2006 00:00:00", 'target': reco[start:test_stop], 'cat': [0]}
+        {'start': "01/07/2006 00:00:00", 'target': reco[start:test_stop]}
          # 'dynamic_feat': [temp[start:test_stop], rg[start:test_stop], gpp[start:train_stop]]},
         # {'start': "01/01/2006 00:00:00", 'target': temp[start:test_stop], 'cat': [1],
         #  'dynamic_feat': [reco[start:test_stop], rg[start:test_stop], gpp[start:train_stop]]},
