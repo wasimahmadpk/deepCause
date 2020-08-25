@@ -64,7 +64,7 @@ train_ds = ListDataset(
 test_ds = ListDataset(
     [
         {'start': "07/01/2006 00:00:00", 'target': reco[start:test_stop],
-         'dynamic_feat':[vpd[start:train_stop]]}
+         'dynamic_feat':[vpd[start:test_stop]]}
         # {'start': "01/01/2006 00:00:00", 'target': temp[start:test_stop], 'cat': [1],
         #  'dynamic_feat': [reco[start:test_stop], rg[start:test_stop], gpp[start:train_stop]]},
         # {'start': "01/01/2006 00:00:00", 'target': rg[start:test_stop], 'cat': [2],
@@ -87,7 +87,7 @@ estimator = DeepAREstimator(
     trainer=Trainer(
         ctx="cpu",
         epochs=epochs,
-        hybridize=True,
+        hybridize=False,
         batch_size=32
     )
 )
