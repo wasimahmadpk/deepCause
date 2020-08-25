@@ -22,10 +22,9 @@ class artificial_dataset():
     def generate_data(self):
 
         for t in range(self.time_steps-6):
-            print(t)
-            self.T.append(C.get('c1')*self.T[(t+6)-Tao.get('t1')] + C.get('c2')*Rg[(t+6)-Tao.get('t2')] + et)
-            self.Gpp.append(C.get('c3')*Rg[(t+6)-Tao.get('t3')]*self.T[(t+6)-Tao.get('t4')] + egpp)
-            self.Reco.append(C.get('c4')*self.Gpp[(t+6)-Tao.get('t5')]*C.get('c5')**(self.T[(t+6)-Tao.get('t6')]-Tref) + ereco)
+            self.T.append(C.get('c1')*self.T[(t+6)-Tao.get('t1')] + C.get('c2')*Rg[(t+6)-Tao.get('t2')] + et[t+6])
+            self.Gpp.append(C.get('c3')*Rg[(t+6)-Tao.get('t3')]*self.T[(t+6)-Tao.get('t4')] + egpp[t+6])
+            self.Reco.append(C.get('c4')*self.Gpp[(t+6)-Tao.get('t5')]*C.get('c5')**((self.T[(t+6)-Tao.get('t6')]-Tref)/10) + ereco[t+6])
         return Rg, self.T, self.Gpp, self.Reco
 
 
@@ -41,7 +40,18 @@ if __name__ == '__main__':
 
     time_steps, Tref = len(rg), 15
     Rg = rg
-    et, egpp, ereco = 1, 2, 5
+    et = np.random.normal(0, 1, time_steps)
+    egpp = np.random.normal(0.5, 0.25, time_steps)
+    ereco = np.random.normal(0.25 , 0.75, time_steps)
+
+    corr1 = np.corrcoef(et, egpp)
+    corr2 = np.corrcoef(et, ereco)
+    corr3 = np.corrcoef(ereco, egpp)
+
+    print("Correlation Coefficient (et, egpp): ", corr1)
+    print("Correlation Coefficient (et, ereco): ", corr2)
+    print("Correlation Coefficient (ereco, egpp): ", corr3)
+
     C = {'c1': 0.2, 'c2': 0.4, 'c3': 0.6, 'c4': 0.4, 'c5': 1.5}
     Tao = {'t1': 1, 't2': 3, 't3': 5, 't4': 7, 't5': 9, 't6': 11}
     data_obj = artificial_dataset(Rg, time_steps, Tref, C, Tao, et, egpp, ereco)
