@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from netCDF4 import Dataset
 import netCDF
+import math
 
 class artificial_dataset():
 
@@ -27,6 +28,11 @@ class artificial_dataset():
             self.Reco.append(C.get('c4')*self.Gpp[(t+6)-Tao.get('t5')]*C.get('c5')**((self.T[(t+6)-Tao.get('t6')]-Tref)/10) + ereco[t+6])
         return Rg, self.T, self.Gpp, self.Reco
 
+    def SNR(self, s, n):
+        Ps = np.sqrt(np.mean(np.array(s)**2))
+        Pn = np.sqrt(np.mean(np.array(n)**2))
+        return 10*math.log(((Ps-Pn)/Pn), 10)
+
 
 if __name__ == '__main__':
 
@@ -41,8 +47,8 @@ if __name__ == '__main__':
     time_steps, Tref = len(rg), 15
     Rg = rg
     et = np.random.normal(0, 1, time_steps)
-    egpp = np.random.normal(0.5, 0.25, time_steps)
-    ereco = np.random.normal(0.25 , 0.75, time_steps)
+    egpp = np.random.normal(0.5, 0.9, time_steps)
+    ereco = np.random.normal(0.25 , 0.88, time_steps)
 
     corr1 = np.corrcoef(et, egpp)
     corr2 = np.corrcoef(et, ereco)
@@ -56,3 +62,7 @@ if __name__ == '__main__':
     Tao = {'t1': 1, 't2': 3, 't3': 5, 't4': 7, 't5': 9, 't6': 11}
     data_obj = artificial_dataset(Rg, time_steps, Tref, C, Tao, et, egpp, ereco)
     rg, tair, gpp, reco = data_obj.generate_data()
+
+    print("SNR", data_obj.SNR(tair, et))
+    print("SNR", data_obj.SNR(gpp, egpp))
+    print("SNR", data_obj.SNR(reco, ereco))
