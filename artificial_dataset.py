@@ -21,7 +21,7 @@ class artificial_dataset():
 
     def generate_data(self):
 
-        for t in range(self.time_steps-6):
+        for t in range(self.time_steps-10):
             self.T.append(C.get('c1')*self.T[t-Tao.get('t1')] + C.get('c2')*self.Rg[t-Tao.get('t2')] + et[t])
             self.Gpp.append(C.get('c3')*self.Rg[t-Tao.get('t3')]*self.T[t-Tao.get('t4')] + egpp[t])
             self.Reco.append(C.get('c4')*self.Gpp[t-Tao.get('t5')]*C.get('c5')**((self.T[t-Tao.get('t6')]-Tref)/10) + ereco[t])
@@ -42,12 +42,18 @@ if __name__ == '__main__':
     nc_attrs, nc_dims, nc_vars = netCDF.ncdump(nc_fid);
 
     # Extract data from NetCDF file
-    rg = list(nc_fid.variables['Rg_f'][:].ravel().data)
+    rg = nc_fid.variables['Rg_f'][:].ravel().data
+    nrg = (rg - np.mean(rg))/np.std(rg)
 
     time_steps, Tref = len(rg), 15
-    et = np.random.normal(0, 1, time_steps)
-    egpp = np.random.normal(5, 2, time_steps)
-    ereco = np.random.normal(0.5, 0.5, time_steps)
+    et = np.random.normal(0.0001, 0.001, time_steps)
+    egpp = np.random.normal(0.00015, 0.0025, time_steps)
+    ereco = np.random.normal(0.00025, 0.0005, time_steps)
+
+    C = {'c1': 0.2, 'c2': 0.5, 'c3': 0.75, 'c4': 0.45, 'c5': 1.75}
+    Tao = {'t1': 1, 't2': 3, 't3': 5, 't4': 7, 't5': 9, 't6': 10}
+    data_obj = artificial_dataset(nrg, time_steps, Tref, C, Tao, et, egpp, ereco)
+    rg, tair, gpp, reco = data_obj.generate_data()
 
     corr1 = np.corrcoef(et, egpp)
     corr2 = np.corrcoef(et, ereco)
@@ -56,11 +62,6 @@ if __name__ == '__main__':
     print("Correlation Coefficient (et, egpp): ", corr1)
     print("Correlation Coefficient (et, ereco): ", corr2)
     print("Correlation Coefficient (ereco, egpp): ", corr3)
-
-    C = {'c1': 0.2, 'c2': 0.4, 'c3': 0.6, 'c4': 0.4, 'c5': 1.5}
-    Tao = {'t1': 1, 't2': 3, 't3': 5, 't4': 7, 't5': 9, 't6': 11}
-    data_obj = artificial_dataset(rg, time_steps, Tref, C, Tao, et, egpp, ereco)
-    rg, tair, gpp, reco = data_obj.generate_data()
 
     print("SNR (Temperature)", data_obj.SNR(tair, et))
     print("SNR (GPP)", data_obj.SNR(gpp, egpp))
