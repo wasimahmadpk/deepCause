@@ -15,7 +15,7 @@ from gluonts.evaluation.backtest import make_evaluation_predictions
 freq = '30min'
 epochs = 100
 
-training_length = 3000  # data for 2 month (July)
+training_length = 2880  # data for 2 month (July)
 prediction_length = 144  # data for 3 days
 
 start = 8640
