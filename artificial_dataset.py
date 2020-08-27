@@ -5,7 +5,8 @@ from netCDF4 import Dataset
 import netCDF
 import math
 
-class artificial_dataset():
+
+class ArtificialDataset:
 
     def __init__(self, Rg, time_steps, Tref, C, Tao, et, egpp, ereco):
 
@@ -52,7 +53,7 @@ if __name__ == '__main__':
 
     C = {'c1': 0.2, 'c2': 0.5, 'c3': 0.75, 'c4': 0.45, 'c5': 1.75}
     Tao = {'t1': 1, 't2': 3, 't3': 5, 't4': 7, 't5': 9, 't6': 10}
-    data_obj = artificial_dataset(nrg, time_steps, Tref, C, Tao, et, egpp, ereco)
+    data_obj = ArtificialDataset(nrg, time_steps, Tref, C, Tao, et, egpp, ereco)
     rg, tair, gpp, reco = data_obj.generate_data()
 
     corr1 = np.corrcoef(et, egpp)
