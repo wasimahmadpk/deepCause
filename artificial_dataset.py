@@ -22,7 +22,7 @@ class ArtificialDataset:
 
     def generate_data(self):
 
-        for t in range(self.time_steps-10):
+        for t in range(10, self.time_steps-10):
             self.T.append(C.get('c1')*self.T[t-Tao.get('t1')] + C.get('c2')*self.Rg[t-Tao.get('t2')] + et[t])
             self.Gpp.append(C.get('c3')*self.Rg[t-Tao.get('t3')]*self.T[t-Tao.get('t4')] + egpp[t])
             self.Reco.append(C.get('c4')*self.Gpp[t-Tao.get('t5')]*C.get('c5')**((self.T[t-Tao.get('t6')]-Tref)/10) + ereco[t])
@@ -48,11 +48,11 @@ if __name__ == '__main__':
 
     time_steps, Tref = len(rg), 15
     et = np.random.normal(0.0001, 0.001, time_steps)
-    egpp = np.random.normal(0.00015, 0.0025, time_steps)
+    egpp = np.random.normal(0.00015, 0.0015, time_steps)
     ereco = np.random.normal(0.00025, 0.0005, time_steps)
 
-    C = {'c1': 0.2, 'c2': 0.5, 'c3': 0.75, 'c4': 0.45, 'c5': 1.75}
-    Tao = {'t1': 1, 't2': 3, 't3': 5, 't4': 7, 't5': 9, 't6': 10}
+    C = {'c1': 0.25, 'c2': 0.5, 'c3': 0.75, 'c4': 1, 'c5': 2}
+    Tao = {'t1': 1, 't2': 2, 't3': 3, 't4': 4, 't5': 5, 't6': 6}
     data_obj = ArtificialDataset(nrg, time_steps, Tref, C, Tao, et, egpp, ereco)
     rg, tair, gpp, reco = data_obj.generate_data()
 
@@ -67,3 +67,20 @@ if __name__ == '__main__':
     print("SNR (Temperature)", data_obj.SNR(tair, et))
     print("SNR (GPP)", data_obj.SNR(gpp, egpp))
     print("SNR (Reco)", data_obj.SNR(reco, ereco))
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(411)
+    ax1.plot(reco[0:55555])
+    ax1.set_ylabel('Reco')
+
+    ax2 = fig.add_subplot(412)
+    ax2.plot(tair[0:55555])
+    ax2.set_ylabel("Temp")
+
+    ax3 = fig.add_subplot(413)
+    ax3.plot(gpp[0:55555])
+    ax3.set_ylabel("GPP")
+
+    ax4 = fig.add_subplot(414)
+    ax4.plot(rg[0:55555])
+    ax4.set_ylabel("Rg")
