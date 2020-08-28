@@ -13,12 +13,12 @@ from gluonts.evaluation.backtest import make_evaluation_predictions
 
 # Parameters
 freq = '30min'
-epochs = 100
+epochs = 10
 
 training_length = 2880  # data for 2 month (July)
 prediction_length = 144  # data for 3 days
 
-start = 8640
+start = 8400
 train_stop = start + training_length
 test_stop = train_stop + prediction_length
 # ******************************************************************
@@ -59,8 +59,8 @@ reco = fluxnet['RECO_NT_VUT_50']
 
 train_ds = ListDataset(
     [
-         {'start': "07/01/2003 00:00:00", 'target': reco[start:train_stop]}
-          # 'dynamic_feat':[temp[start:train_stop]]}
+         {'start': "07/01/2003 00:00:00", 'target': reco[start:train_stop],
+           'dynamic_feat':[temp[start:train_stop]]}
         # {'start': "01/01/2006 00:00:00", 'target': temp[start:train_stop], 'cat': [1],
         #  'dynamic_feat':[reco[start:train_stop], rg[start:train_stop], gpp[start:train_stop]]},
         # {'start': "01/01/2006 00:00:00", 'target': rg[start:train_stop], 'cat': [2],
@@ -73,8 +73,8 @@ train_ds = ListDataset(
 
 test_ds = ListDataset(
     [
-        {'start': "07/01/2003 00:00:00", 'target': reco[start:test_stop]}
-         # 'dynamic_feat':[temp[start:test_stop]]}
+        {'start': "07/01/2003 00:00:00", 'target': reco[start:test_stop],
+         'dynamic_feat':[temp[start:test_stop]]}
         # {'start': "01/01/2006 00:00:00", 'target': temp[start:test_stop], 'cat': [1],
         #  'dynamic_feat': [reco[start:test_stop], rg[start:test_stop], gpp[start:train_stop]]},
         # {'start': "01/01/2006 00:00:00", 'target': rg[start:test_stop], 'cat': [2],
@@ -94,11 +94,12 @@ estimator = DeepAREstimator(
     freq=freq,
     num_layers=2,
     num_cells=40,
+    dropout_rate=0.15,
     trainer=Trainer(
         ctx="cpu",
         epochs=epochs,
         hybridize=True,
-        batch_size=48
+        batch_size=32
     )
 )
 
