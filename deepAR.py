@@ -11,9 +11,15 @@ import netCDF
 from gluonts.distribution.multivariate_gaussian import MultivariateGaussianOutput
 from gluonts.evaluation.backtest import make_evaluation_predictions
 
+
+def normalize(var):
+    nvar = (var - np.mean(var)) / np.std(var)
+    return nvar
+
+
 # Parameters
 freq = '30min'
-epochs = 100
+epochs = 50
 
 training_length = 2880  # data for 2 month (July)
 prediction_length = 144  # data for 3 days
@@ -25,12 +31,20 @@ test_stop = train_stop + prediction_length
 
 "Load fluxnet 2015 data for grassland IT-Mbo site"
 fluxnet = pd.read_csv("/home/ahmad/PycharmProjects/deepCause/datasets/fluxnet2015/FLX_IT-MBo_FLUXNET2015_SUBSET_2003-2013_1-4/FLX_IT-MBo_FLUXNET2015_SUBSET_HH_2003-2013_1-4.csv")
-rg = fluxnet['SW_IN_F']
-temp = fluxnet['TA_F']
-vpd = fluxnet['VPD_F']
-ppt = fluxnet['P_F']
-gpp = fluxnet['GPP_DT_VUT_50']
-reco = fluxnet['RECO_NT_VUT_50']
+org = fluxnet['SW_IN_F']
+otemp = fluxnet['TA_F']
+ovpd = fluxnet['VPD_F']
+oppt = fluxnet['P_F']
+ogpp = fluxnet['GPP_DT_VUT_50']
+oreco = fluxnet['RECO_NT_VUT_50']
+
+# ************** NOrmalize the features *************
+rg = normalize(org)
+temp = normalize(otemp)
+vpd = normalize(ovpd)
+ppt = normalize(oppt)
+gpp = normalize(ogpp)
+reco = normalize(oreco)
 # ******************************************************************
 
 "Load fluxnet 2012 data"
@@ -60,7 +74,7 @@ reco = fluxnet['RECO_NT_VUT_50']
 train_ds = ListDataset(
     [
          {'start': "07/01/2003 00:00:00", 'target': reco[start:train_stop],
-           'dynamic_feat':[temp[start:train_stop], rg[start:train_stop]]}
+           'dynamic_feat':[temp[start:train_stop], rg[start:train_stop], ppt[start:train_stop], vpd[start:train_stop]]}
         # {'start': "01/01/2006 00:00:00", 'target': temp[start:train_stop], 'cat': [1],
         #  'dynamic_feat':[reco[start:train_stop], rg[start:train_stop], gpp[start:train_stop]]},
         # {'start': "01/01/2006 00:00:00", 'target': rg[start:train_stop], 'cat': [2],
@@ -74,7 +88,7 @@ train_ds = ListDataset(
 test_ds = ListDataset(
     [
         {'start': "07/01/2003 00:00:00", 'target': reco[start:test_stop],
-         'dynamic_feat':[temp[start:train_stop], rg[start:train_stop]]}
+         'dynamic_feat':[temp[start:train_stop], rg[start:train_stop], ppt[start:train_stop], vpd[start:train_stop]]}
         # {'start': "01/01/2006 00:00:00", 'target': temp[start:test_stop], 'cat': [1],
         #  'dynamic_feat': [reco[start:test_stop], rg[start:test_stop], gpp[start:train_stop]]},
         # {'start': "01/01/2006 00:00:00", 'target': rg[start:test_stop], 'cat': [2],
@@ -91,14 +105,14 @@ estimator = DeepAREstimator(
     prediction_length=prediction_length,
     context_length=prediction_length,
     freq=freq,
-    num_layers=2,
-    num_cells=40,
+    num_layers=4,
+    num_cells=50,
     dropout_rate=0.1,
     trainer=Trainer(
         ctx="cpu",
         epochs=epochs,
         hybridize=True,
-        batch_size=32
+        batch_size=96
     )
 )
 
