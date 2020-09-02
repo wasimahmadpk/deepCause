@@ -60,7 +60,7 @@ reco = fluxnet['RECO_NT_VUT_50']
 train_ds = ListDataset(
     [
          {'start': "07/01/2003 00:00:00", 'target': reco[start:train_stop],
-           'dynamic_feat':[temp[start:train_stop], vpd[start:train_stop]]}
+           'dynamic_feat':[temp[start:train_stop], rg[start:train_stop]]}
         # {'start': "01/01/2006 00:00:00", 'target': temp[start:train_stop], 'cat': [1],
         #  'dynamic_feat':[reco[start:train_stop], rg[start:train_stop], gpp[start:train_stop]]},
         # {'start': "01/01/2006 00:00:00", 'target': rg[start:train_stop], 'cat': [2],
@@ -74,7 +74,7 @@ train_ds = ListDataset(
 test_ds = ListDataset(
     [
         {'start': "07/01/2003 00:00:00", 'target': reco[start:test_stop],
-         'dynamic_feat':[temp[start:train_stop], vpd[start:train_stop]]}
+         'dynamic_feat':[temp[start:train_stop], rg[start:train_stop]]}
         # {'start': "01/01/2006 00:00:00", 'target': temp[start:test_stop], 'cat': [1],
         #  'dynamic_feat': [reco[start:test_stop], rg[start:test_stop], gpp[start:train_stop]]},
         # {'start': "01/01/2006 00:00:00", 'target': rg[start:test_stop], 'cat': [2],
