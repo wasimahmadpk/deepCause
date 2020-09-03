@@ -45,6 +45,7 @@ vpd = normalize(ovpd)
 ppt = normalize(oppt)
 gpp = normalize(ogpp)
 reco = normalize(oreco)
+intervene = np.random.normal(0.0001, 0.001, len(reco))
 # ******************************************************************
 
 "Load fluxnet 2012 data"
@@ -74,7 +75,7 @@ reco = normalize(oreco)
 train_ds = ListDataset(
     [
          {'start': "07/01/2003 00:00:00", 'target': reco[start:train_stop],
-           'dynamic_feat':[temp[start:train_stop], rg[start:train_stop], ppt[start:train_stop], vpd[start:train_stop]]}
+           'dynamic_feat':[intervene[start:train_stop], rg[start:train_stop], ppt[start:train_stop], vpd[start:train_stop]]}
         # {'start': "01/01/2006 00:00:00", 'target': temp[start:train_stop], 'cat': [1],
         #  'dynamic_feat':[reco[start:train_stop], rg[start:train_stop], gpp[start:train_stop]]},
         # {'start': "01/01/2006 00:00:00", 'target': rg[start:train_stop], 'cat': [2],
@@ -88,7 +89,7 @@ train_ds = ListDataset(
 test_ds = ListDataset(
     [
         {'start': "07/01/2003 00:00:00", 'target': reco[start:test_stop],
-         'dynamic_feat':[temp[start:train_stop], rg[start:train_stop], ppt[start:train_stop], vpd[start:train_stop]]}
+         'dynamic_feat':[intervene[start:train_stop], rg[start:train_stop], ppt[start:train_stop], vpd[start:train_stop]]}
         # {'start': "01/01/2006 00:00:00", 'target': temp[start:test_stop], 'cat': [1],
         #  'dynamic_feat': [reco[start:test_stop], rg[start:test_stop], gpp[start:train_stop]]},
         # {'start': "01/01/2006 00:00:00", 'target': rg[start:test_stop], 'cat': [2],
@@ -147,4 +148,5 @@ plot_forecasts(tss, forecasts, past_length=600, num_plots=4)
 evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
 
 agg_metrics, item_metrics = evaluator(iter(tss), iter(forecasts), num_series=len(test_ds))
+print("Intervene on VPD")
 print("Performance metrices", agg_metrics)
