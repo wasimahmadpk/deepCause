@@ -1,5 +1,8 @@
 import pandas as pd
 import numpy as np
+import pickle
+import pathlib
+from os import path
 import matplotlib.pyplot as plt
 from itertools import islice
 from gluonts.evaluation import Evaluator
@@ -19,7 +22,7 @@ def normalize(var):
 
 # Parameters
 freq = '30min'
-epochs = 50
+epochs = 1
 
 training_length = 2880  # data for 2 month (July)
 prediction_length = 144  # data for 3 days
@@ -117,7 +120,17 @@ estimator = DeepAREstimator(
     )
 )
 
-predictor = estimator.train(train_ds)
+filename = pathlib.Path("'finalized_model.sav'")
+if not filename.exists():
+    print("File does not exist, so wait for a training a new model:)")
+    predictor = estimator.train(train_ds)
+
+    # save the model to disk
+    pickle.dump(predictor, open(filename, 'wb'))
+
+
+# load the model from disk
+predictor = pickle.load(open(filename, 'rb'))
 
 forecast_it, ts_it = make_evaluation_predictions(
     dataset=test_ds,  # test dataset
