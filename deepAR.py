@@ -3,6 +3,7 @@ import numpy as np
 import pickle
 import pathlib
 from os import path
+from datetime import datetime
 import matplotlib.pyplot as plt
 from itertools import islice
 from gluonts.evaluation import Evaluator
@@ -22,7 +23,13 @@ def normalize(var):
 
 # Parameters
 freq = '30min'
-epochs = 1
+epochs = 100
+
+now = datetime.now()
+
+current_time = now.strftime("%H:%M:%S")
+print("Code updated at: ", current_time)
+
 
 training_length = 2880  # data for 2 month (July)
 prediction_length = 144  # data for 3 days
@@ -78,7 +85,7 @@ intervene = np.random.normal(0.0001, 0.001, len(reco))
 train_ds = ListDataset(
     [
          {'start': "07/01/2003 00:00:00", 'target': reco[start:train_stop],
-           'dynamic_feat':[intervene[start:train_stop], rg[start:train_stop], ppt[start:train_stop], vpd[start:train_stop]]}
+           'dynamic_feat':[reco[start:train_stop], gpp[start:train_stop], rg[start:train_stop], ppt[start:train_stop], vpd[start:train_stop]]}
         # {'start': "01/01/2006 00:00:00", 'target': temp[start:train_stop], 'cat': [1],
         #  'dynamic_feat':[reco[start:train_stop], rg[start:train_stop], gpp[start:train_stop]]},
         # {'start': "01/01/2006 00:00:00", 'target': rg[start:train_stop], 'cat': [2],
@@ -92,7 +99,7 @@ train_ds = ListDataset(
 test_ds = ListDataset(
     [
         {'start': "07/01/2003 00:00:00", 'target': reco[start:test_stop],
-         'dynamic_feat':[intervene[start:train_stop], rg[start:train_stop], ppt[start:train_stop], vpd[start:train_stop]]}
+         'dynamic_feat':[reco[start:train_stop], gpp[start:train_stop], rg[start:train_stop], ppt[start:train_stop], vpd[start:train_stop]]}
         # {'start': "01/01/2006 00:00:00", 'target': temp[start:test_stop], 'cat': [1],
         #  'dynamic_feat': [reco[start:test_stop], rg[start:test_stop], gpp[start:train_stop]]},
         # {'start': "01/01/2006 00:00:00", 'target': rg[start:test_stop], 'cat': [2],
@@ -109,7 +116,7 @@ estimator = DeepAREstimator(
     prediction_length=prediction_length,
     context_length=prediction_length,
     freq=freq,
-    num_layers=4,
+    num_layers=5,
     num_cells=50,
     dropout_rate=0.1,
     trainer=Trainer(
@@ -161,5 +168,5 @@ plot_forecasts(tss, forecasts, past_length=600, num_plots=4)
 evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
 
 agg_metrics, item_metrics = evaluator(iter(tss), iter(forecasts), num_series=len(test_ds))
-print("Intervene on VPD")
+print("No Intervention")
 print("Performance metrices", agg_metrics)
