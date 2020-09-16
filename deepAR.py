@@ -33,15 +33,15 @@ def down_sample(data, win_size):
 
 
 # Parameters
-freq = 'D'
-epochs = 100
-win_size = 48
+freq = 'H'
+epochs = 50
+win_size = 2
 
 now = datetime.now()
 current_time = now.strftime("%H:%M:%S")
 print("Code updated at: ", current_time)
 
-training_length = round((3*2880)/win_size)  # data for 2 month (July)
+training_length = round((2*2880)/win_size)  # data for 2 month (July)
 prediction_length = round((2*144)/win_size)  # data for 2*3 days
 
 start = round(8400/win_size)
@@ -109,7 +109,7 @@ train_ds = ListDataset(
 
 test_ds = ListDataset(
     [
-        {'start': "07/01/2003 00:00:00", 'target': reco[start:test_stop],
+        {'start': "07/01/2003 00:00:00", 'target': reco[start-start:test_stop],
          'dynamic_feat':[reco[start:train_stop], gpp[start:train_stop], rg[start:train_stop], ppt[start:train_stop], vpd[start:train_stop]]}
         # {'start': "01/01/2006 00:00:00", 'target': temp[start:test_stop], 'cat': [1],
         #  'dynamic_feat': [reco[start:test_stop], rg[start:test_stop], gpp[start:train_stop]]},
@@ -140,7 +140,7 @@ estimator = DeepAREstimator(
 
 filename = pathlib.Path("trained_model.sav")
 if not filename.exists():
-    print("File does not exist, so wait for a training a new model:)")
+    print("Training forecasting model....")
     predictor = estimator.train(train_ds)
 
     # save the model to disk
@@ -174,7 +174,7 @@ def plot_forecasts(tss, forecasts, past_length, num_plots):
 forecasts = list(forecast_it)
 tss = list(ts_it)
 titles = ['Reco', 'Temperature', 'Rg', 'GPP']
-plot_forecasts(tss, forecasts, past_length=12, num_plots=4)
+plot_forecasts(tss, forecasts, past_length=999, num_plots=4)
 
 evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
 
