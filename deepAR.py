@@ -42,7 +42,7 @@ current_time = now.strftime("%H:%M:%S")
 print("Code updated at: ", current_time)
 
 training_length = round((2*2880)/win_size)  # data for 2 month (July)
-prediction_length = round((2*144)/win_size)  # data for 2*3 days
+prediction_length = round((2*144)/win_size)  # data for 2*2 days
 
 start = round(8400/win_size)
 train_stop = start + training_length
@@ -96,7 +96,8 @@ intervene = np.random.normal(0.0001, 0.001, len(reco))
 train_ds = ListDataset(
     [
          {'start': "07/01/2003 00:00:00", 'target': reco[start:train_stop],
-           'dynamic_feat':[reco[start:train_stop], gpp[start:train_stop], rg[start:train_stop], ppt[start:train_stop], vpd[start:train_stop]]}
+           'dynamic_feat':[temp[start:train_stop], gpp[start:train_stop], rg[start:train_stop],
+                           ppt[start:train_stop], vpd[start:train_stop]]}
         # {'start': "01/01/2006 00:00:00", 'target': temp[start:train_stop], 'cat': [1],
         #  'dynamic_feat':[reco[start:train_stop], rg[start:train_stop], gpp[start:train_stop]]},
         # {'start': "01/01/2006 00:00:00", 'target': rg[start:train_stop], 'cat': [2],
@@ -109,8 +110,9 @@ train_ds = ListDataset(
 
 test_ds = ListDataset(
     [
-        {'start': "07/01/2003 00:00:00", 'target': reco[start-start:test_stop],
-         'dynamic_feat':[reco[start:train_stop], gpp[start:train_stop], rg[start:train_stop], ppt[start:train_stop], vpd[start:train_stop]]}
+        {'start': "07/01/2003 00:00:00", 'target': reco[start:test_stop],
+         'dynamic_feat':[temp[start:test_stop], gpp[start:test_stop], rg[start:test_stop],
+                         ppt[start:test_stop], vpd[start:test_stop]]}
         # {'start': "01/01/2006 00:00:00", 'target': temp[start:test_stop], 'cat': [1],
         #  'dynamic_feat': [reco[start:test_stop], rg[start:test_stop], gpp[start:train_stop]]},
         # {'start': "01/01/2006 00:00:00", 'target': rg[start:test_stop], 'cat': [2],
@@ -160,7 +162,7 @@ forecast_it, ts_it = make_evaluation_predictions(
 def plot_forecasts(tss, forecasts, past_length, num_plots):
     counter = 0
     for target, forecast in islice(zip(tss, forecasts), num_plots):
-        ax = target[-past_length:].plot(figsize=(12, 5), linewidth=2)
+        ax = target[-past_length:].plot(figsize=(14, 10), linewidth=2)
         forecast.plot(color='g')
         plt.grid(which='both')
         plt.legend(["observations", "median prediction", "90% confidence interval", "50% confidence interval"])
@@ -174,7 +176,7 @@ def plot_forecasts(tss, forecasts, past_length, num_plots):
 forecasts = list(forecast_it)
 tss = list(ts_it)
 titles = ['Reco', 'Temperature', 'Rg', 'GPP']
-plot_forecasts(tss, forecasts, past_length=999, num_plots=4)
+plot_forecasts(tss, forecasts, past_length=333, num_plots=4)
 
 evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
 
