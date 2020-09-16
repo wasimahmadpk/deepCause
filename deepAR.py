@@ -34,15 +34,15 @@ def down_sample(data, win_size):
 
 # Parameters
 freq = 'D'
-epochs = 1
+epochs = 100
 win_size = 48
 
 now = datetime.now()
 current_time = now.strftime("%H:%M:%S")
 print("Code updated at: ", current_time)
 
-training_length = round(2880/win_size)  # data for 2 month (July)
-prediction_length = round(144/win_size)  # data for 3 days
+training_length = round((3*2880)/win_size)  # data for 2 month (July)
+prediction_length = round((2*144)/win_size)  # data for 2*3 days
 
 start = round(8400/win_size)
 train_stop = start + training_length
@@ -67,15 +67,6 @@ gpp = down_sample(normalize(ogpp), win_size)
 reco = down_sample(normalize(oreco), win_size)
 intervene = np.random.normal(0.0001, 0.001, len(reco))
 
-data = {'rg': rg, 'temp': temp, 'vpd': vpd, 'ppt': ppt,
-        'gpp': gpp, 'reco': reco, 'intervene': intervene}
-df = pd.DataFrame(data)
-rg = df['rg']
-temp = df['temp']
-vpd = df['vpd']
-ppt = df['ppt']
-gpp = df['gpp']
-intervene = df['intervene']
 # *****************************************************
 
 "Load fluxnet 2012 data"
@@ -137,7 +128,7 @@ estimator = DeepAREstimator(
     context_length=prediction_length,
     freq=freq,
     num_layers=5,
-    num_cells=50,
+    num_cells=30,
     dropout_rate=0.1,
     trainer=Trainer(
         ctx="cpu",
