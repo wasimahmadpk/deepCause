@@ -21,20 +21,30 @@ def normalize(var):
     return nvar
 
 
+def down_sample(data, win_size):
+    agg_data = []
+    monthly_data = []
+    for i in range(len(data)):
+        monthly_data.append(data[i])
+        if (i % win_size) == 0:
+            agg_data.append(sum(monthly_data)/win_size)
+            monthly_data = []
+    return agg_data
+
+
 # Parameters
-freq = '30min'
-epochs = 100
+freq = 'D'
+epochs = 1
+win_size = 48
 
 now = datetime.now()
-
 current_time = now.strftime("%H:%M:%S")
 print("Code updated at: ", current_time)
 
+training_length = round(2880/win_size)  # data for 2 month (July)
+prediction_length = round(144/win_size)  # data for 3 days
 
-training_length = 2880  # data for 2 month (July)
-prediction_length = 144  # data for 3 days
-
-start = 8400
+start = round(8400/win_size)
 train_stop = start + training_length
 test_stop = train_stop + prediction_length
 # ******************************************************************
@@ -48,15 +58,25 @@ oppt = fluxnet['P_F']
 ogpp = fluxnet['GPP_DT_VUT_50']
 oreco = fluxnet['RECO_NT_VUT_50']
 
-# ************** NOrmalize the features *************
-rg = normalize(org)
-temp = normalize(otemp)
-vpd = normalize(ovpd)
-ppt = normalize(oppt)
-gpp = normalize(ogpp)
-reco = normalize(oreco)
+# ************** Normalize the features *************
+rg = down_sample(normalize(org), win_size)
+temp = down_sample(normalize(otemp), win_size)
+vpd = down_sample(normalize(ovpd), win_size)
+ppt = down_sample(normalize(oppt), win_size)
+gpp = down_sample(normalize(ogpp), win_size)
+reco = down_sample(normalize(oreco), win_size)
 intervene = np.random.normal(0.0001, 0.001, len(reco))
-# ******************************************************************
+
+data = {'rg': rg, 'temp': temp, 'vpd': vpd, 'ppt': ppt,
+        'gpp': gpp, 'reco': reco, 'intervene': intervene}
+df = pd.DataFrame(data)
+rg = df['rg']
+temp = df['temp']
+vpd = df['vpd']
+ppt = df['ppt']
+gpp = df['gpp']
+intervene = df['intervene']
+# *****************************************************
 
 "Load fluxnet 2012 data"
 # nc_f = '/home/ahmad/PycharmProjects/deepCause/datasets/ncdata/DE-Hai.2000.2006.hourly.nc'  # Your filename
@@ -123,11 +143,11 @@ estimator = DeepAREstimator(
         ctx="cpu",
         epochs=epochs,
         hybridize=True,
-        batch_size=96
+        batch_size=16
     )
 )
 
-filename = pathlib.Path("'finalized_model.sav'")
+filename = pathlib.Path("trained_model.sav")
 if not filename.exists():
     print("File does not exist, so wait for a training a new model:)")
     predictor = estimator.train(train_ds)
@@ -163,7 +183,7 @@ def plot_forecasts(tss, forecasts, past_length, num_plots):
 forecasts = list(forecast_it)
 tss = list(ts_it)
 titles = ['Reco', 'Temperature', 'Rg', 'GPP']
-plot_forecasts(tss, forecasts, past_length=600, num_plots=4)
+plot_forecasts(tss, forecasts, past_length=12, num_plots=4)
 
 evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
 
