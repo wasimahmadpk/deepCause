@@ -41,10 +41,10 @@ now = datetime.now()
 current_time = now.strftime("%H:%M:%S")
 print("Code updated at: ", current_time)
 
-training_length = 60  # round((2880)/win_size)  # data for 2 month (July)
-prediction_length = 5  # round((144)/win_size)  # data for 2*2 days
+training_length = 75  # round((2880)/win_size)  # data for 2 month (Jun-July-Aug*)
+prediction_length = 5  # round((144)/win_size)  # data for 2*2 days (5 days of Aug)
 
-start = round(8400/win_size)
+start = round(7200/win_size)
 train_stop = start + training_length
 test_stop = train_stop + prediction_length
 # ******************************************************************
@@ -130,13 +130,13 @@ estimator = DeepAREstimator(
     context_length=prediction_length,
     freq=freq,
     num_layers=5,
-    num_cells=40,
+    num_cells=50,
     dropout_rate=0.1,
     trainer=Trainer(
         ctx="cpu",
         epochs=epochs,
         hybridize=True,
-        batch_size=32
+        batch_size=16
     )
 )
 
