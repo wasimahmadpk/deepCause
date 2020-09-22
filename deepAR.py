@@ -1,7 +1,8 @@
-import pandas as pd
-import numpy as np
+import math
 import netCDF
 import pickle
+import pandas as pd
+import numpy as np
 import pathlib
 from os import path
 from math import sqrt
@@ -32,6 +33,12 @@ def down_sample(data, win_size):
             agg_data.append(sum(monthly_data)/win_size)
             monthly_data = []
     return agg_data
+
+
+def SNR(s, n):
+        Ps = np.sqrt(np.mean(np.array(s)**2))
+        Pn = np.sqrt(np.mean(np.array(n)**2))
+        return 10*math.log(((Ps-Pn)/Pn), 10)
 
 
 def mean_absolute_percentage_error(y_true, y_pred):
@@ -75,8 +82,29 @@ vpd = down_sample(normalize(ovpd), win_size)
 ppt = down_sample(normalize(oppt), win_size)
 gpp = down_sample(normalize(ogpp), win_size)
 reco = down_sample(normalize(oreco), win_size)
-intervene = np.random.normal(0.0001, 0.001, len(reco))
+intervene = np.random.normal(0.0001, 0.005, len(reco))
 
+
+corr1 = np.corrcoef(temp, intervene)
+corr2 = np.corrcoef(gpp, intervene)
+corr3 = np.corrcoef(reco, intervene)
+corr4 = np.corrcoef(rg, intervene)
+corr5 = np.corrcoef(ppt, intervene)
+corr6 = np.corrcoef(vpd, intervene)
+
+print("Correlation Coefficient (temp, intervene): ", corr1)
+print("Correlation Coefficient (gpp, intervene): ", corr2)
+print("Correlation Coefficient (reco, intervene): ", corr3)
+print("Correlation Coefficient (rg, intervene): ", corr4)
+print("Correlation Coefficient (ppt, intervene): ", corr5)
+print("Correlation Coefficient (vpd, intervene): ", corr6)
+
+print("SNR (Temperature)", SNR(temp, intervene))
+print("SNR (GPP)", SNR(gpp, intervene))
+print("SNR (Reco)", SNR(reco, intervene))
+print("SNR (RG)", SNR(rg, intervene))
+print("SNR (PPT)", SNR(ppt, intervene))
+print("SNR (VPD)", SNR(vpd, intervene))
 
 train_ds = ListDataset(
     [
@@ -113,14 +141,14 @@ estimator = DeepAREstimator(
     freq=freq,
     num_layers=6,
     num_cells=60,
-    dropout_rate=0.1,
+    dropout_rate=0.05,
     trainer=Trainer(
         ctx="cpu",
         epochs=epochs,
         hybridize=False,
-        batch_size=24
+        batch_size=32
     ),
-    distr_output= MultivariateGaussianOutput(dim=dim)
+    distr_output=MultivariateGaussianOutput(dim=dim)
 )
 
 filename = pathlib.Path("trained_model.sav")
@@ -146,7 +174,9 @@ def plot_forecasts(tss, forecasts, past_length, num_plots):
     counter = 0
     for target, forecast in islice(zip(tss, forecasts), num_plots):
         ax = target[-past_length:].plot(figsize=(14, 10), linewidth=2)
-        forecast.plot(color='g')
+        # forecast.plot(color='g')
+        plt.plot(reco[train_stop:train_stop + prediction_length], 'r')
+        plt.plot(forecasts[0].samples.transpose()[0][0], 'g')
         plt.grid(which='both')
         plt.legend(["observations", "median prediction", "90% confidence interval", "50% confidence interval"])
         plt.title("Forecasting " + titles[counter] + " time series")
@@ -161,24 +191,19 @@ tss = list(ts_it)
 titles = ['Reco', 'Temperature', 'Rg', 'GPP']
 
 y_true = reco[train_stop:train_stop+prediction_length]
-y_pred = forecasts[0].samples.transpose()[0]
+y_pred = forecasts[0].samples.transpose()[0][0]
 mape = mean_absolute_percentage_error(y_true, y_pred)
 
 print("Y actual:", y_true)
 print("Y pred:", y_pred)
 print("Y pred mean:", np.mean(y_pred, axis=0))
 
-
-
-rmse = sqrt(mean_squared_error(np.array(y_true), np.mean(y_pred, axis=0)))
-
+rmse = sqrt(mean_squared_error(np.array(y_true), np.array(y_pred)))
 print(f"RMSE: {rmse}, MAPE:{mape}%")
 
-
-#plot_forecasts(tss, forecasts, past_length=21, num_plots=4)
+plot_forecasts(tss, forecasts, past_length=21, num_plots=4)
 
 #evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
-
 #agg_metrics, item_metrics = evaluator(iter(tss), iter(forecasts), num_series=len(test_ds))
 #print("Intervention on Temperature")
 #print("Performance metrices", agg_metrics)
