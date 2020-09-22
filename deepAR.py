@@ -60,6 +60,7 @@ print("Code updated at: ", current_time)
 
 training_length = 87  # round((2880)/win_size)  # data for 2 month (Jun-July-Aug*)
 prediction_length = 3  # round((144)/win_size)  # data for 2*2 days (last 3 days of Aug)
+num_samples = 10
 
 start = round(7200/win_size)
 train_stop = start + training_length
@@ -110,8 +111,8 @@ train_ds = ListDataset(
     [
          {'start': "06/01/2003 00:00:00", 
           'target': [reco[start:train_stop], rg[start:train_stop], 
-                     gpp[start:train_stop], temp[start:train_stop], 
-                     ppt[start:train_stop], vpd[start:train_stop]]}                 
+                     gpp[start:train_stop], temp[start:train_stop],
+                     ppt[start:train_stop], vpd[start:train_stop]]}
           #'dynamic_feat':[temp[start:train_stop], 
           #                gpp[start:train_stop], rg[start:train_stop],
            #               ppt[start:train_stop], vpd[start:train_stop]]}
@@ -123,9 +124,9 @@ train_ds = ListDataset(
 test_ds = ListDataset(
     [
         {'start': "06/01/2003 00:00:00", 
-         'target': [reco[start:test_stop], rg[start:test_stop], 
-                    gpp[start:test_stop], temp[start:test_stop], 
-                    ppt[start:test_stop], vpd[start:test_stop]]}         
+         'target': [reco[start:test_stop], rg[start:test_stop],
+                    gpp[start:test_stop], temp[start:test_stop],
+                    ppt[start:test_stop], vpd[start:test_stop]]}
          #'dynamic_feat':[temp[start:test_stop], 
           #               gpp[start:test_stop], rg[start:test_stop],
            #              ppt[start:test_stop], vpd[start:test_stop]]}
@@ -137,7 +138,7 @@ test_ds = ListDataset(
 # create estimator
 estimator = DeepAREstimator(
     prediction_length=prediction_length,
-    context_length=prediction_length+10,
+    context_length=prediction_length,
     freq=freq,
     num_layers=6,
     num_cells=60,
@@ -166,42 +167,44 @@ predictor = pickle.load(open(filename, 'rb'))
 forecast_it, ts_it = make_evaluation_predictions(
     dataset=test_ds,  # test dataset
     predictor=predictor,  # predictor
-    num_samples=prediction_length,  # number of sample paths we want for evaluation
+    num_samples=num_samples,  # number of sample paths we want for evaluation
 )
 
 
 def plot_forecasts(tss, forecasts, past_length, num_plots):
-    counter = 0
+
     for target, forecast in islice(zip(tss, forecasts), num_plots):
-        ax = target[-past_length:].plot(figsize=(14, 10), linewidth=2)
-        # forecast.plot(color='g')
-        plt.plot(reco[train_stop:train_stop + prediction_length], 'r')
-        plt.plot(forecasts[0].samples.transpose()[0][0], 'g')
+
+        ax = target[-past_length:][0].plot(figsize=(14, 10), linewidth=2)
+        forecast.copy_dim(0).plot(color='g')
         plt.grid(which='both')
         plt.legend(["observations", "median prediction", "90% confidence interval", "50% confidence interval"])
-        plt.title("Forecasting " + titles[counter] + " time series")
+        plt.title("Forecasting Reco time series")
         plt.xlabel("Timestamp")
-        plt.ylabel(titles[counter])
+        plt.ylabel('Reco')
         plt.show()
-        counter += 1
 
 
 forecasts = list(forecast_it)
 tss = list(ts_it)
-titles = ['Reco', 'Temperature', 'Rg', 'GPP']
 
+y_pred = []
+
+for i in range(num_samples):
+    y_pred.append(forecasts[0].samples[i].transpose()[0].tolist())
+
+y_pred = np.array(y_pred)
 y_true = reco[train_stop:train_stop+prediction_length]
-y_pred = forecasts[0].samples.transpose()[0][0]
-mape = mean_absolute_percentage_error(y_true, y_pred)
+mape = mean_absolute_percentage_error(y_true, np.mean(y_pred, axis=0))
 
 print("Y actual:", y_true)
 print("Y pred:", y_pred)
 print("Y pred mean:", np.mean(y_pred, axis=0))
 
-rmse = sqrt(mean_squared_error(np.array(y_true), np.array(y_pred)))
-print(f"RMSE: {rmse}, MAPE:{mape}%")
+rmse = sqrt(mean_squared_error(y_true, np.mean(y_pred, axis=0)))
+print(f"RMSE: {rmse}, MAPE:{mape} %")
 
-plot_forecasts(tss, forecasts, past_length=21, num_plots=4)
+plot_forecasts(tss, forecasts, past_length=14, num_plots=4)
 
 #evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
 #agg_metrics, item_metrics = evaluator(iter(tss), iter(forecasts), num_series=len(test_ds))
