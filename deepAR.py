@@ -1,8 +1,11 @@
 import pandas as pd
 import numpy as np
+import netCDF
 import pickle
 import pathlib
 from os import path
+from math import sqrt
+from netCDF4 import Dataset
 from datetime import datetime
 import matplotlib.pyplot as plt
 from itertools import islice
@@ -10,8 +13,7 @@ from gluonts.evaluation import Evaluator
 from gluonts.dataset.common import ListDataset
 from gluonts.model.deepar import DeepAREstimator
 from gluonts.trainer import Trainer
-from netCDF4 import Dataset
-import netCDF
+from sklearn.metrics import mean_squared_error
 from gluonts.distribution.multivariate_gaussian import MultivariateGaussianOutput
 from gluonts.evaluation.backtest import make_evaluation_predictions
 
@@ -32,9 +34,17 @@ def down_sample(data, win_size):
     return agg_data
 
 
+def mean_absolute_percentage_error(y_true, y_pred):
+    ## Note: does not handle mix 1d representation
+    #if _is_1d(y_true):
+    #    y_true, y_pred = _check_1d_array(y_true, y_pred)
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
+
 # Parameters
 freq = 'D'
-epochs = 50
+dim = 6
+epochs = 100
 win_size = 48
 
 now = datetime.now()
@@ -67,66 +77,50 @@ gpp = down_sample(normalize(ogpp), win_size)
 reco = down_sample(normalize(oreco), win_size)
 intervene = np.random.normal(0.0001, 0.001, len(reco))
 
-# *****************************************************
-
-"Load fluxnet 2012 data"
-# nc_f = '/home/ahmad/PycharmProjects/deepCause/datasets/ncdata/DE-Hai.2000.2006.hourly.nc'  # Your filename
-# nc_fid = Dataset(nc_f, 'r')
-# # Dataset is the class behavior to open the file
-# # and create an instance of the ncCDF4 class
-# nc_attrs, nc_dims, nc_vars = netCDF.ncdump(nc_fid);
-#
-# # Extract data from NetCDF file
-# vpd = nc_fid.variables['VPD_f'][:].ravel().data  # extract/copy the data
-# temp = nc_fid.variables['Tair_f'][:].ravel().data
-# rg = nc_fid.variables['Rg_f'][:].ravel().data
-# swc1 = nc_fid.variables['SWC1_f'][:].ravel().data
-# nee = nc_fid.variables['NEE_f'][:].ravel().data
-# gpp = nc_fid.variables['GPP_f'][:].ravel().data
-# reco = nc_fid.variables['Reco'][:].ravel().data
-# le = nc_fid.variables['LE_f'][:].ravel().data
-# h = nc_fid.variables['H_f'][:].ravel().data
-# time = nc_fid.variables['time'][:].ravel().data
-# hour = nc_fid.variables['hour'][:].ravel().data
-# day = nc_fid.variables['day'][:].ravel().data
-# month = nc_fid.variables['month'][:].ravel().data
-# year = nc_fid.variables['year'][:].ravel().data
-# ******************************************************************
 
 train_ds = ListDataset(
     [
-         {'start': "06/01/2003 00:00:00", 'target': reco[start:train_stop],
-          'dynamic_feat':temp[start:train_stop],
-          'dynamic_feat':gpp[start:train_stop]}
-           # 'dynamic_feat':[temp[start:train_stop], gpp[start:train_stop], rg[start:train_stop],
-           #                 ppt[start:train_stop], vpd[start:train_stop]]}
+         {'start': "06/01/2003 00:00:00", 
+          'target': [reco[start:train_stop], rg[start:train_stop], 
+                     gpp[start:train_stop], temp[start:train_stop], 
+                     ppt[start:train_stop], vpd[start:train_stop]]}                 
+          #'dynamic_feat':[temp[start:train_stop], 
+          #                gpp[start:train_stop], rg[start:train_stop],
+           #               ppt[start:train_stop], vpd[start:train_stop]]}
     ],
-    freq=freq
+    freq=freq,
+    one_dim_target=False
 )
 
 test_ds = ListDataset(
     [
-        {'start': "06/01/2003 00:00:00", 'target': reco[start:test_stop]}
-         # 'dynamic_feat':[intervene[start:test_stop], gpp[start:test_stop], rg[start:test_stop],
-         #                 ppt[start:test_stop], vpd[start:test_stop]]}
+        {'start': "06/01/2003 00:00:00", 
+         'target': [reco[start:test_stop], rg[start:test_stop], 
+                    gpp[start:test_stop], temp[start:test_stop], 
+                    ppt[start:test_stop], vpd[start:test_stop]]}         
+         #'dynamic_feat':[temp[start:test_stop], 
+          #               gpp[start:test_stop], rg[start:test_stop],
+           #              ppt[start:test_stop], vpd[start:test_stop]]}
     ],
-    freq=freq
+    freq=freq,
+    one_dim_target=False
 )
 
 # create estimator
 estimator = DeepAREstimator(
     prediction_length=prediction_length,
-    context_length=prediction_length,
+    context_length=prediction_length+10,
     freq=freq,
-    num_layers=5,
-    num_cells=50,
+    num_layers=6,
+    num_cells=60,
     dropout_rate=0.1,
     trainer=Trainer(
         ctx="cpu",
         epochs=epochs,
-        hybridize=True,
-        batch_size=32
-    )
+        hybridize=False,
+        batch_size=24
+    ),
+    distr_output= MultivariateGaussianOutput(dim=dim)
 )
 
 filename = pathlib.Path("trained_model.sav")
@@ -165,10 +159,26 @@ def plot_forecasts(tss, forecasts, past_length, num_plots):
 forecasts = list(forecast_it)
 tss = list(ts_it)
 titles = ['Reco', 'Temperature', 'Rg', 'GPP']
-plot_forecasts(tss, forecasts, past_length=21, num_plots=4)
 
-evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
+y_true = reco[train_stop:train_stop+prediction_length]
+y_pred = forecasts[0].samples.transpose()[0]
+mape = mean_absolute_percentage_error(y_true, y_pred)
 
-agg_metrics, item_metrics = evaluator(iter(tss), iter(forecasts), num_series=len(test_ds))
-print("Intervention on Temperature")
-print("Performance metrices", agg_metrics)
+print("Y actual:", y_true)
+print("Y pred:", y_pred)
+print("Y pred mean:", np.mean(y_pred, axis=0))
+
+
+
+rmse = sqrt(mean_squared_error(np.array(y_true), np.mean(y_pred, axis=0)))
+
+print(f"RMSE: {rmse}, MAPE:{mape}%")
+
+
+#plot_forecasts(tss, forecasts, past_length=21, num_plots=4)
+
+#evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
+
+#agg_metrics, item_metrics = evaluator(iter(tss), iter(forecasts), num_series=len(test_ds))
+#print("Intervention on Temperature")
+#print("Performance metrices", agg_metrics)
