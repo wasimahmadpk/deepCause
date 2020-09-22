@@ -47,12 +47,12 @@ if __name__ == '__main__':
     nrg = (rg - np.mean(rg))/np.std(rg)
 
     time_steps, Tref = len(rg), 15
-    et = np.random.normal(0.0001, 0.001, time_steps)
+    et = np.random.normal(0.0001, 0.005, time_steps)
     egpp = np.random.normal(0.00015, 0.0015, time_steps)
-    ereco = np.random.normal(0.00025, 0.0005, time_steps)
+    ereco = np.random.normal(0.0005, 0.0005, time_steps)
 
-    C = {'c1': 0.25, 'c2': 0.5, 'c3': 0.75, 'c4': 1, 'c5': 2}
-    Tao = {'t1': 1, 't2': 2, 't3': 3, 't4': 4, 't5': 5, 't6': 6}
+    C = {'c1': 0.9, 'c2': 1.75, 'c3': 0.75, 'c4': 0.65, 'c5': 1.85}
+    Tao = {'t1': 3, 't2': 1, 't3': 6, 't4': 5, 't5': 3, 't6': 4}
     data_obj = ArtificialDataset(nrg, time_steps, Tref, C, Tao, et, egpp, ereco)
     rg, tair, gpp, reco = data_obj.generate_data()
 
