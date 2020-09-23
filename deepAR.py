@@ -206,7 +206,7 @@ print(f"RMSE: {rmse}, MAPE:{mape} %")
 
 plot_forecasts(tss, forecasts, past_length=14, num_plots=4)
 
-#evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
-#agg_metrics, item_metrics = evaluator(iter(tss), iter(forecasts), num_series=len(test_ds))
-#print("Intervention on Temperature")
-#print("Performance metrices", agg_metrics)
+evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
+agg_metrics, item_metrics = evaluator(iter([pd.DataFrame((tss[0][:][0]))]), iter([forecasts[0].copy_dim(0)]), num_series=len(test_ds))
+print("Intervention on Temperature")
+print("Performance metrices", agg_metrics)
