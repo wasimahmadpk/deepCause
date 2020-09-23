@@ -13,6 +13,7 @@ from itertools import islice
 from gluonts.evaluation import Evaluator
 from gluonts.dataset.common import ListDataset
 from gluonts.model.deepar import DeepAREstimator
+from gluonts.model.deepar._network import DeepARTrainingNetwork
 from gluonts.trainer import Trainer
 from sklearn.metrics import mean_squared_error
 from gluonts.distribution.multivariate_gaussian import MultivariateGaussianOutput
