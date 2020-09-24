@@ -21,7 +21,7 @@ from gluonts.evaluation.backtest import make_evaluation_predictions
 
 
 def normalize(var):
-    nvar = (var - np.mean(var)) / np.std(var)
+    nvar = (np.array(var) - np.mean(var)) / np.std(var)
     return nvar
 
 
@@ -52,16 +52,16 @@ def mean_absolute_percentage_error(y_true, y_pred):
 # Parameters
 freq = 'D'
 dim = 6
-epochs = 100
+epochs = 150
 win_size = 48
 
 now = datetime.now()
 current_time = now.strftime("%H:%M:%S")
 print("Code updated at: ", current_time)
 
-training_length = 87  # round((2880)/win_size)  # data for 2 month (Jun-July-Aug*)
-prediction_length = 3  # round((144)/win_size)  # data for 2*2 days (last 3 days of Aug)
-num_samples = 10
+training_length = 85  # round((2880)/win_size)  # data for 2 month (Jun-July-Aug*)
+prediction_length = 5  # round((144)/win_size)  # data for 2*2 days (last 3 days of Aug)
+num_samples = 15
 
 start = round(7200/win_size)
 train_stop = start + training_length
@@ -78,13 +78,13 @@ ogpp = fluxnet['GPP_DT_VUT_50']
 oreco = fluxnet['RECO_NT_VUT_50']
 
 # ************ Normalize the features *************
-rg = down_sample(normalize(org), win_size)
-temp = down_sample(normalize(otemp), win_size)
-vpd = down_sample(normalize(ovpd), win_size)
-ppt = down_sample(normalize(oppt), win_size)
-gpp = down_sample(normalize(ogpp), win_size)
-reco = down_sample(normalize(oreco), win_size)
-intervene = np.random.normal(0.0001, 0.005, len(reco))
+rg = normalize(down_sample(org, win_size))
+temp = normalize(down_sample(otemp, win_size))
+vpd = normalize(down_sample(ovpd, win_size))
+ppt = normalize(down_sample(oppt, win_size))
+gpp = normalize(down_sample(ogpp, win_size))
+reco = normalize(down_sample(oreco, win_size))
+intervene = np.random.normal(0, 1, len(reco))
 
 
 corr1 = np.corrcoef(temp, intervene)
@@ -101,12 +101,12 @@ print("Correlation Coefficient (rg, intervene): ", corr4)
 print("Correlation Coefficient (ppt, intervene): ", corr5)
 print("Correlation Coefficient (vpd, intervene): ", corr6)
 
-print("SNR (Temperature)", SNR(temp, intervene))
-print("SNR (GPP)", SNR(gpp, intervene))
-print("SNR (Reco)", SNR(reco, intervene))
-print("SNR (RG)", SNR(rg, intervene))
-print("SNR (PPT)", SNR(ppt, intervene))
-print("SNR (VPD)", SNR(vpd, intervene))
+# print("SNR (Temperature)", SNR(temp, intervene))
+# print("SNR (GPP)", SNR(gpp, intervene))
+# print("SNR (Reco)", SNR(reco, intervene))
+# print("SNR (RG)", SNR(rg, intervene))
+# print("SNR (PPT)", SNR(ppt, intervene))
+# print("SNR (VPD)", SNR(vpd, intervene))
 
 train_ds = ListDataset(
     [
@@ -127,7 +127,7 @@ test_ds = ListDataset(
         {'start': "06/01/2003 00:00:00", 
          'target': [reco[start:test_stop], rg[start:test_stop],
                     gpp[start:test_stop], temp[start:test_stop],
-                    ppt[start:test_stop], intervene[start:test_stop]]}
+                    ppt[start:test_stop], vpd[start:test_stop]]}
          #'dynamic_feat':[temp[start:test_stop], 
           #               gpp[start:test_stop], rg[start:test_stop],
            #              ppt[start:test_stop], vpd[start:test_stop]]}
@@ -142,13 +142,13 @@ estimator = DeepAREstimator(
     context_length=prediction_length,
     freq=freq,
     num_layers=6,
-    num_cells=60,
+    num_cells=40,
     dropout_rate=0.05,
     trainer=Trainer(
         ctx="cpu",
         epochs=epochs,
         hybridize=False,
-        batch_size=32
+        batch_size=24
     ),
     distr_output=MultivariateGaussianOutput(dim=dim)
 )
@@ -204,6 +204,7 @@ print("Y pred mean:", np.mean(y_pred, axis=0))
 
 rmse = sqrt(mean_squared_error(y_true, np.mean(y_pred, axis=0)))
 print(f"RMSE: {rmse}, MAPE:{mape} %")
+print("Causal strength: ", math.log(rmse/0.0766), 2)
 
 plot_forecasts(tss, forecasts, past_length=14, num_plots=4)
 
