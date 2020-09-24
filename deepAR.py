@@ -51,7 +51,7 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
 # Parameters
 freq = 'D'
-dim = 6
+dim = 5
 epochs = 100
 win_size = 48
 
@@ -111,7 +111,7 @@ print("Correlation Coefficient (vpd, intervene): ", corr6)
 train_ds = ListDataset(
     [
          {'start': "06/01/2003 00:00:00", 
-          'target': [reco[start:train_stop], rg[start:train_stop], 
+          'target': [reco[start:train_stop],
                      gpp[start:train_stop], temp[start:train_stop],
                      ppt[start:train_stop], vpd[start:train_stop]]}
           #'dynamic_feat':[temp[start:train_stop], 
@@ -125,8 +125,8 @@ train_ds = ListDataset(
 test_ds = ListDataset(
     [
         {'start': "06/01/2003 00:00:00", 
-         'target': [reco[start:test_stop], rg[start:test_stop],
-                    gpp[start:test_stop], temp[start:test_stop],
+         'target': [reco[start:test_stop],
+                    gpp[start:test_stop], intervene[start:test_stop],
                     ppt[start:test_stop], vpd[start:test_stop]]}
          #'dynamic_feat':[temp[start:test_stop], 
           #               gpp[start:test_stop], rg[start:test_stop],
@@ -141,14 +141,14 @@ estimator = DeepAREstimator(
     prediction_length=prediction_length,
     context_length=prediction_length,
     freq=freq,
-    num_layers=6,
-    num_cells=60,
-    dropout_rate=0.1,
+    num_layers=5,
+    num_cells=50,
+    dropout_rate=0.075,
     trainer=Trainer(
         ctx="cpu",
         epochs=epochs,
         hybridize=False,
-        batch_size=24
+        batch_size=32
     ),
     distr_output=MultivariateGaussianOutput(dim=dim)
 )
@@ -157,7 +157,6 @@ filename = pathlib.Path("trained_model.sav")
 if not filename.exists():
     print("Training forecasting model....")
     predictor = estimator.train(train_ds)
-
     # save the model to disk
     pickle.dump(predictor, open(filename, 'wb'))
 
@@ -204,7 +203,7 @@ print("Y pred mean:", np.mean(y_pred, axis=0))
 
 rmse = sqrt(mean_squared_error(y_true, np.mean(y_pred, axis=0)))
 print(f"RMSE: {rmse}, MAPE:{mape} %")
-print("Causal strength: ", math.log(rmse/0.0766), 2)
+print("Causal strength: ", math.log(rmse/0.1592), 2)
 
 plot_forecasts(tss, forecasts, past_length=14, num_plots=4)
 
