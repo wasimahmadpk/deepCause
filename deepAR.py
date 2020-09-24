@@ -52,7 +52,7 @@ def mean_absolute_percentage_error(y_true, y_pred):
 # Parameters
 freq = 'D'
 dim = 6
-epochs = 150
+epochs = 100
 win_size = 48
 
 now = datetime.now()
@@ -142,8 +142,8 @@ estimator = DeepAREstimator(
     context_length=prediction_length,
     freq=freq,
     num_layers=6,
-    num_cells=40,
-    dropout_rate=0.05,
+    num_cells=60,
+    dropout_rate=0.1,
     trainer=Trainer(
         ctx="cpu",
         epochs=epochs,
