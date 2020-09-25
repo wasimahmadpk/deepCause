@@ -113,10 +113,9 @@ train_ds = ListDataset(
          {'start': "06/01/2003 00:00:00", 
           'target': [reco[start:train_stop],
                      gpp[start:train_stop], temp[start:train_stop],
+                     ppt[start:train_stop], vpd[start:train_stop]],
+          'dynamic_feat':[temp[start:train_stop], gpp[start:train_stop],
                      ppt[start:train_stop], vpd[start:train_stop]]}
-          #'dynamic_feat':[temp[start:train_stop], 
-          #                gpp[start:train_stop], rg[start:train_stop],
-           #               ppt[start:train_stop], vpd[start:train_stop]]}
     ],
     freq=freq,
     one_dim_target=False
@@ -126,11 +125,10 @@ test_ds = ListDataset(
     [
         {'start': "06/01/2003 00:00:00", 
          'target': [reco[start:test_stop],
-                    gpp[start:test_stop], intervene[start:test_stop],
+                    intervene[start:test_stop], temp[start:test_stop],
+                    ppt[start:test_stop], vpd[start:test_stop]],
+         'dynamic_feat':[temp[start:test_stop], gpp[start:test_stop],
                     ppt[start:test_stop], vpd[start:test_stop]]}
-         #'dynamic_feat':[temp[start:test_stop], 
-          #               gpp[start:test_stop], rg[start:test_stop],
-           #              ppt[start:test_stop], vpd[start:test_stop]]}
     ],
     freq=freq,
     one_dim_target=False
@@ -143,7 +141,7 @@ estimator = DeepAREstimator(
     freq=freq,
     num_layers=5,
     num_cells=50,
-    dropout_rate=0.075,
+    dropout_rate=0.1,
     trainer=Trainer(
         ctx="cpu",
         epochs=epochs,
