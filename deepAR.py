@@ -141,7 +141,7 @@ estimator = DeepAREstimator(
     freq=freq,
     num_layers=5,
     num_cells=50,
-    dropout_rate=0.1,
+    dropout_rate=0.05,
     trainer=Trainer(
         ctx="cpu",
         epochs=epochs,
@@ -201,7 +201,7 @@ print("Y pred mean:", np.mean(y_pred, axis=0))
 
 rmse = sqrt(mean_squared_error(y_true, np.mean(y_pred, axis=0)))
 print(f"RMSE: {rmse}, MAPE:{mape} %")
-print("Causal strength: ", math.log(rmse/0.1969), 2)
+print("Causal strength: ", math.log(rmse/0.1670), 2)
 
 plot_forecasts(tss, forecasts, past_length=14, num_plots=4)
 
