@@ -56,6 +56,10 @@ if __name__ == '__main__':
     data_obj = ArtificialDataset(nrg, time_steps, Tref, C, Tao, et, egpp, ereco)
     rg, tair, gpp, reco = data_obj.generate_data()
 
+    data = {'Rg': rg[10:], 'T': tair, 'GPP': gpp, 'Reco': reco}
+    df = pd.DataFrame(data, columns=['Rg', 'T', 'GPP', 'Reco'])
+    df.to_csv(r'/home/ahmad/PycharmProjects/deepCause/datasets/ncdata/artificial_data.csv', index_label=False, header=True)
+
     corr1 = np.corrcoef(et, egpp)
     corr2 = np.corrcoef(et, ereco)
     corr3 = np.corrcoef(ereco, egpp)
