@@ -51,8 +51,8 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
 # Parameters
 freq = 'D'
-dim = 5
-epochs = 2
+dim = 4
+epochs = 125
 win_size = 48
 
 now = datetime.now()
@@ -61,9 +61,9 @@ print("Code updated at: ", current_time)
 
 training_length = 85  # round((2880)/win_size)  # data for 2 month (Jun-July-Aug*)
 prediction_length = 5  # round((144)/win_size)  # data for 2*2 days (last 3 days of Aug)
-num_samples = 15
+num_samples = 50
 
-start = round(7200/win_size)
+start = round(7200/win_size) + 30
 train_stop = start + training_length
 test_stop = train_stop + prediction_length
 # ******************************************************************
@@ -133,7 +133,7 @@ test_ds = ListDataset(
     [
         {'start': "06/01/2003 00:00:00", 
          'target': [reco[start:test_stop],
-                    gpp[start:test_stop], temp[start:test_stop],
+                    intervene[start:test_stop], temp[start:test_stop],
                     rg[start:test_stop]],
          'dynamic_feat':[gpp[start:test_stop], temp[start:test_stop],
                     rg[start:test_stop]]}
@@ -147,7 +147,7 @@ estimator = DeepAREstimator(
     prediction_length=prediction_length,
     context_length=prediction_length,
     freq=freq,
-    num_layers=5,
+    num_layers=4,
     num_cells=50,
     dropout_rate=0.05,
     trainer=Trainer(
@@ -203,13 +203,9 @@ y_pred = np.array(y_pred)
 y_true = reco[train_stop:train_stop+prediction_length]
 mape = mean_absolute_percentage_error(y_true, np.mean(y_pred, axis=0))
 
-print("Y actual:", y_true)
-print("Y pred:", y_pred)
-print("Y pred mean:", np.mean(y_pred, axis=0))
-
 rmse = sqrt(mean_squared_error(y_true, np.mean(y_pred, axis=0)))
-print(f"RMSE: {rmse}, MAPE:{mape} %")
-print("Causal strength: ", math.log(rmse/0.1670), 2)
+print(f"RMSE: {rmse}, MAPE:{mape}%")
+print("Causal strength: ", math.log(rmse/0.0978), 2)
 
 plot_forecasts(tss, forecasts, past_length=14, num_plots=4)
 
