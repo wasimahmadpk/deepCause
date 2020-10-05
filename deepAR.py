@@ -54,7 +54,7 @@ freq = 'D'
 dim = 4
 epochs = 125
 win_size = 48
-
+c
 now = datetime.now()
 current_time = now.strftime("%H:%M:%S")
 print("Code updated at: ", current_time)
