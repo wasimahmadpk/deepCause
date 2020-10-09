@@ -51,10 +51,10 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
 # Parameters
 freq = 'D'
-dim = 4
-epochs = 125
+dim = 5
+epochs = 100
 win_size = 48
-c
+
 now = datetime.now()
 current_time = now.strftime("%H:%M:%S")
 print("Code updated at: ", current_time)
@@ -63,51 +63,51 @@ training_length = 85  # round((2880)/win_size)  # data for 2 month (Jun-July-Aug
 prediction_length = 5  # round((144)/win_size)  # data for 2*2 days (last 3 days of Aug)
 num_samples = 50
 
-start = round(7200/win_size) + 30
+start = round(7200/win_size)
 train_stop = start + training_length
 test_stop = train_stop + prediction_length
 # ******************************************************************
 
-# "Load fluxnet 2015 data for grassland IT-Mbo site"
-# fluxnet = pd.read_csv("/home/ahmad/PycharmProjects/deepCause/datasets/fluxnet2015/FLX_IT-MBo_FLUXNET2015_SUBSET_2003-2013_1-4/FLX_IT-MBo_FLUXNET2015_SUBSET_HH_2003-2013_1-4.csv")
-# org = fluxnet['SW_IN_F']
-# otemp = fluxnet['TA_F']
-# ovpd = fluxnet['VPD_F']
-# oppt = fluxnet['P_F']
-# ogpp = fluxnet['GPP_DT_VUT_50']
-# oreco = fluxnet['RECO_NT_VUT_50']
+"Load fluxnet 2015 data for grassland IT-Mbo site"
+fluxnet = pd.read_csv("/home/ahmad/PycharmProjects/deepCause/datasets/fluxnet2015/FLX_IT-MBo_FLUXNET2015_SUBSET_2003-2013_1-4/FLX_IT-MBo_FLUXNET2015_SUBSET_HH_2003-2013_1-4.csv")
+org = fluxnet['SW_IN_F']
+otemp = fluxnet['TA_F']
+ovpd = fluxnet['VPD_F']
+oppt = fluxnet['P_F']
+ogpp = fluxnet['GPP_DT_VUT_50']
+oreco = fluxnet['RECO_NT_VUT_50']
 
 # LOad synthetic data
 
-syndata = pd.read_csv("/home/ahmad/PycharmProjects/deepCause/datasets/ncdata/artificial_data.csv")
-org = syndata['Rg']
-oreco = syndata['Reco']
-otemp = syndata['T']
-ogpp = syndata['GPP']
+# syndata = pd.read_csv("/home/ahmad/PycharmProjects/deepCause/datasets/ncdata/artificial_data.csv")
+# org = syndata['Rg']
+# oreco = syndata['Reco']
+# otemp = syndata['T']
+# ogpp = syndata['GPP']
 
 # ************ Normalize the features *************
 rg = normalize(down_sample(org, win_size))
 temp = normalize(down_sample(otemp, win_size))
-# vpd = normalize(down_sample(ovpd, win_size))
-# ppt = normalize(down_sample(oppt, win_size))
+vpd = normalize(down_sample(ovpd, win_size))
+ppt = normalize(down_sample(oppt, win_size))
 gpp = normalize(down_sample(ogpp, win_size))
 reco = normalize(down_sample(oreco, win_size))
-intervene = np.random.normal(0, 1, len(reco))
+intervene = np.random.choice(gpp, len(reco))
 
 
 corr1 = np.corrcoef(temp, intervene)
 corr2 = np.corrcoef(gpp, intervene)
 corr3 = np.corrcoef(reco, intervene)
 corr4 = np.corrcoef(rg, intervene)
-# corr5 = np.corrcoef(ppt, intervene)
-# corr6 = np.corrcoef(vpd, intervene)
+corr5 = np.corrcoef(ppt, intervene)
+corr6 = np.corrcoef(vpd, intervene)
 
 print("Correlation Coefficient (temp, intervene): ", corr1)
 print("Correlation Coefficient (gpp, intervene): ", corr2)
 print("Correlation Coefficient (reco, intervene): ", corr3)
 print("Correlation Coefficient (rg, intervene): ", corr4)
-# print("Correlation Coefficient (ppt, intervene): ", corr5)
-# print("Correlation Coefficient (vpd, intervene): ", corr6)
+print("Correlation Coefficient (ppt, intervene): ", corr5)
+print("Correlation Coefficient (vpd, intervene): ", corr6)
 
 # print("SNR (Temperature)", SNR(temp, intervene))
 # print("SNR (GPP)", SNR(gpp, intervene))
@@ -121,9 +121,9 @@ train_ds = ListDataset(
          {'start': "06/01/2003 00:00:00", 
           'target': [reco[start:train_stop],
                      gpp[start:train_stop], temp[start:train_stop],
-                     rg[start:train_stop]],
+                     ppt[start:train_stop], vpd[start: train_stop]],
           'dynamic_feat':[gpp[start:train_stop], temp[start:train_stop],
-                     rg[start:train_stop]]}
+                     ppt[start:train_stop], vpd[start: train_stop]]}
     ],
     freq=freq,
     one_dim_target=False
@@ -134,9 +134,9 @@ test_ds = ListDataset(
         {'start': "06/01/2003 00:00:00", 
          'target': [reco[start:test_stop],
                     intervene[start:test_stop], temp[start:test_stop],
-                    rg[start:test_stop]],
+                    ppt[start:test_stop], vpd[start: test_stop]],
          'dynamic_feat':[gpp[start:test_stop], temp[start:test_stop],
-                    rg[start:test_stop]]}
+                    ppt[start:test_stop], vpd[start:test_stop]]}
     ],
     freq=freq,
     one_dim_target=False
@@ -147,7 +147,7 @@ estimator = DeepAREstimator(
     prediction_length=prediction_length,
     context_length=prediction_length,
     freq=freq,
-    num_layers=4,
+    num_layers=5,
     num_cells=50,
     dropout_rate=0.05,
     trainer=Trainer(
@@ -205,7 +205,7 @@ mape = mean_absolute_percentage_error(y_true, np.mean(y_pred, axis=0))
 
 rmse = sqrt(mean_squared_error(y_true, np.mean(y_pred, axis=0)))
 print(f"RMSE: {rmse}, MAPE:{mape}%")
-print("Causal strength: ", math.log(rmse/0.0978), 2)
+print("Causal strength: ", math.log(rmse/0.1600), 2)
 
 plot_forecasts(tss, forecasts, past_length=14, num_plots=4)
 
