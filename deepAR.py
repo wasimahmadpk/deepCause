@@ -51,7 +51,7 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
 # Parameters
 freq = 'D'
-dim = 1
+dim = 2
 epochs = 100
 win_size = 48
 
@@ -102,7 +102,7 @@ gpp = normalize(down_sample(ogpp, win_size))
 reco = normalize(down_sample(oreco, win_size))
 # vpd = normalize(down_sample(ovpd, win_size))
 # ppt = normalize(down_sample(oppt, win_size))
-intervene = np.random.choice(gpp, len(reco))
+intervene = np.random.choice(temp, len(reco))
 
 
 # corr1 = np.corrcoef(temp, intervene)
@@ -129,8 +129,8 @@ intervene = np.random.choice(gpp, len(reco))
 train_ds = ListDataset(
     [
          {'start': "06/01/2003 00:00:00", 
-          'target': [temp[start:train_stop],
-                    ],
+          'target': [reco[start:train_stop],
+                    temp[start: train_stop]],
           'dynamic_feat':[rg[start:train_stop]]}
     ],
     freq=freq,
@@ -140,8 +140,8 @@ train_ds = ListDataset(
 test_ds = ListDataset(
     [
         {'start': "06/01/2003 00:00:00",
-         'target': [temp[start:test_stop],
-                    ],
+         'target': [reco[start:test_stop],
+                   temp[start: test_stop]],
          'dynamic_feat': [rg[start:test_stop]]}
     ],
     freq=freq,
@@ -206,14 +206,14 @@ for i in range(num_samples):
     y_pred.append(forecasts[0].samples[i].transpose()[0].tolist())
 
 y_pred = np.array(y_pred)
-y_true = temp[train_stop:train_stop+prediction_length]
+y_true = reco[train_stop:train_stop+prediction_length]
 mape = mean_absolute_percentage_error(y_true, np.mean(y_pred, axis=0))
 
 rmse = sqrt(mean_squared_error(y_true, np.mean(y_pred, axis=0)))
 print(f"RMSE: {rmse}, MAPE:{mape}%")
-print("Causal strength: ", math.log(rmse/0.3022), 2)
+print("Causal strength: ", math.log(rmse/0.5147), 2)
 
-plot_forecasts(tss, forecasts, past_length=14, num_plots=4)
+plot_forecasts(tss, forecasts, past_length=33, num_plots=4)
 
 evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
 agg_metrics, item_metrics = evaluator(iter([pd.DataFrame((tss[0][:][0]))]), iter([forecasts[0].copy_dim(0)]), num_series=len(test_ds))
