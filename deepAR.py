@@ -51,19 +51,19 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
 # Parameters
 freq = 'D'
-dim = 4
-epochs = 32
+dim = 1
+epochs = 100
 win_size = 48
 
 now = datetime.now()
 current_time = now.strftime("%H:%M:%S")
 print("Code updated at: ", current_time)
 
-training_length = round((2880)/win_size)  # data for 2 month (Jun-July-Aug*)
-prediction_length = round((144)/win_size)  # data for 2*2 days (last 3 days of Aug)
-num_samples = 50
+training_length = round((2640)/win_size)  # data for 2 month (Jun-July-Aug*)
+prediction_length = round((240)/win_size)  # data for 2*2 days (last 3 days of Aug)
+num_samples = 32
 
-start = round(7200/win_size)
+start = round(8640/win_size)
 train_stop = start + training_length
 test_stop = train_stop + prediction_length
 # *********************************************************
@@ -129,9 +129,9 @@ intervene = np.random.choice(gpp, len(reco))
 train_ds = ListDataset(
     [
          {'start': "06/01/2003 00:00:00", 
-          'target': [reco[start:train_stop],
-                     gpp[start:train_stop], temp[start:train_stop], rg[start:train_stop]],
-          'dynamic_feat':[gpp[start:train_stop], temp[start:train_stop], rg[start:train_stop]]}
+          'target': [temp[start:train_stop],
+                    ],
+          'dynamic_feat':[rg[start:train_stop]]}
     ],
     freq=freq,
     one_dim_target=False
@@ -140,9 +140,9 @@ train_ds = ListDataset(
 test_ds = ListDataset(
     [
         {'start': "06/01/2003 00:00:00",
-         'target': [reco[start:test_stop],
-                    gpp[start:test_stop], temp[start:test_stop], rg[start:test_stop]],
-         'dynamic_feat': [gpp[start:test_stop], temp[start:test_stop], rg[start:test_stop]]}
+         'target': [temp[start:test_stop],
+                    ],
+         'dynamic_feat': [rg[start:test_stop]]}
     ],
     freq=freq,
     one_dim_target=False
@@ -153,14 +153,14 @@ estimator = DeepAREstimator(
     prediction_length=prediction_length,
     context_length=prediction_length,
     freq=freq,
-    num_layers=3,
+    num_layers=2,
     num_cells=40,
-    dropout_rate=0.1,
+    dropout_rate=0.05,
     trainer=Trainer(
         ctx="cpu",
         epochs=epochs,
         hybridize=False,
-        batch_size=32
+        batch_size=24
     ),
     distr_output=MultivariateGaussianOutput(dim=dim)
 )
@@ -211,7 +211,7 @@ mape = mean_absolute_percentage_error(y_true, np.mean(y_pred, axis=0))
 
 rmse = sqrt(mean_squared_error(y_true, np.mean(y_pred, axis=0)))
 print(f"RMSE: {rmse}, MAPE:{mape}%")
-print("Causal strength: ", math.log(rmse/0.1600), 2)
+print("Causal strength: ", math.log(rmse/0.3022), 2)
 
 plot_forecasts(tss, forecasts, past_length=14, num_plots=4)
 
