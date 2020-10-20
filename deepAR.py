@@ -51,7 +51,7 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
 # Parameters
 freq = 'D'
-dim = 2
+dim = 4
 epochs = 100
 win_size = 48
 
@@ -86,6 +86,8 @@ test_stop = train_stop + prediction_length
 # oppt = fluxnet['P_F']
 # ogpp = fluxnet['GPP_DT_VUT_50']
 # oreco = fluxnet['RECO_NT_VUT_50']
+# plt.hist(oppt, 1000)
+# plt.show()
 
 # LOad synthetic data
 syndata = pd.read_csv("/home/ahmad/PycharmProjects/deepCause/datasets/ncdata/artificial_data.csv")
@@ -130,8 +132,9 @@ train_ds = ListDataset(
     [
          {'start': "06/01/2003 00:00:00", 
           'target': [reco[start:train_stop],
-                    temp[start: train_stop]],
-          'dynamic_feat':[rg[start:train_stop]]}
+                    temp[start: train_stop], rg[start: train_stop],
+                     gpp[start: train_stop]]
+          }
     ],
     freq=freq,
     one_dim_target=False
@@ -140,9 +143,10 @@ train_ds = ListDataset(
 test_ds = ListDataset(
     [
         {'start': "06/01/2003 00:00:00",
-         'target': [reco[start:test_stop],
-                   temp[start: test_stop]],
-         'dynamic_feat': [rg[start:test_stop]]}
+         'target': [reco[start: test_stop],
+                   temp[start: test_stop], rg[start: test_stop],
+                    gpp[start: test_stop]]
+         }
     ],
     freq=freq,
     one_dim_target=False
@@ -153,7 +157,7 @@ estimator = DeepAREstimator(
     prediction_length=prediction_length,
     context_length=prediction_length,
     freq=freq,
-    num_layers=2,
+    num_layers=4,
     num_cells=40,
     dropout_rate=0.05,
     trainer=Trainer(
