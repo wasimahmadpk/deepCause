@@ -104,7 +104,7 @@ gpp = normalize(down_sample(ogpp, win_size))
 reco = normalize(down_sample(oreco, win_size))
 # vpd = normalize(down_sample(ovpd, win_size))
 # ppt = normalize(down_sample(oppt, win_size))
-intervene = np.random.choice(temp, len(reco))
+intervene = np.random.choice(rg, len(reco))
 
 
 # corr1 = np.corrcoef(temp, intervene)
@@ -215,7 +215,7 @@ mape = mean_absolute_percentage_error(y_true, np.mean(y_pred, axis=0))
 
 rmse = sqrt(mean_squared_error(y_true, np.mean(y_pred, axis=0)))
 print(f"RMSE: {rmse}, MAPE:{mape}%")
-print("Causal strength: ", math.log(rmse/0.5147), 2)
+print("Causal strength: ", math.log(rmse/0.5870), 2)
 
 plot_forecasts(tss, forecasts, past_length=33, num_plots=4)
 
