@@ -51,17 +51,17 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
 # Parameters
 freq = 'D'
-dim = 4
-epochs = 100
+dim = 2
+epochs = 125
 win_size = 48
 
 now = datetime.now()
 current_time = now.strftime("%H:%M:%S")
 print("Code updated at: ", current_time)
 
-training_length = round((2640)/win_size)  # data for 2 month (Jun-July-Aug*)
-prediction_length = round((240)/win_size)  # data for 2*2 days (last 3 days of Aug)
-num_samples = 32
+training_length = round((3984)/win_size)  # data for 2 month (Jun-July-Aug*)
+prediction_length = round((336)/win_size)  # data for 2*2 days (last 3 days of Aug)
+num_samples = 24
 
 start = round(8640/win_size)
 train_stop = start + training_length
@@ -78,14 +78,14 @@ test_stop = train_stop + prediction_length
 # long = dwd['Long']
 # lat = dwd['Lat']
 
-# "Load fluxnet 2015 data for grassland IT-Mbo site"
-# fluxnet = pd.read_csv("/home/ahmad/PycharmProjects/deepCause/datasets/fluxnet2015/FLX_IT-MBo_FLUXNET2015_SUBSET_2003-2013_1-4/FLX_IT-MBo_FLUXNET2015_SUBSET_HH_2003-2013_1-4.csv")
-# org = fluxnet['SW_IN_F']
-# otemp = fluxnet['TA_F']
-# ovpd = fluxnet['VPD_F']
-# oppt = fluxnet['P_F']
-# ogpp = fluxnet['GPP_DT_VUT_50']
-# oreco = fluxnet['RECO_NT_VUT_50']
+"Load fluxnet 2015 data for grassland IT-Mbo site"
+fluxnet = pd.read_csv("/home/ahmad/PycharmProjects/deepCause/datasets/fluxnet2015/FLX_IT-MBo_FLUXNET2015_SUBSET_2003-2013_1-4/FLX_IT-MBo_FLUXNET2015_SUBSET_HH_2003-2013_1-4.csv")
+org = fluxnet['SW_IN_F']
+otemp = fluxnet['TA_F']
+ovpd = fluxnet['VPD_F']
+oppt = fluxnet['P_F']
+ogpp = fluxnet['GPP_DT_VUT_50']
+oreco = fluxnet['RECO_NT_VUT_50']
 # plt.hist(oppt, 1000)
 # plt.show()
 
@@ -131,9 +131,9 @@ intervene = np.random.choice(temp, len(reco))
 train_ds = ListDataset(
     [
          {'start': "06/01/2003 00:00:00", 
-          'target': [reco[start:train_stop],
-                    temp[start: train_stop], rg[start: train_stop],
-                     gpp[start: train_stop]]
+          'target': [
+                    temp[start: train_stop], rg[start: train_stop]
+                     ]
           }
     ],
     freq=freq,
@@ -143,9 +143,9 @@ train_ds = ListDataset(
 test_ds = ListDataset(
     [
         {'start': "06/01/2003 00:00:00",
-         'target': [reco[start: test_stop],
-                   temp[start: test_stop], rg[start: test_stop],
-                    gpp[start: test_stop]]
+         'target': [
+                   temp[start: test_stop], rg[start: test_stop]
+                    ]
          }
     ],
     freq=freq,
@@ -158,13 +158,13 @@ estimator = DeepAREstimator(
     context_length=prediction_length,
     freq=freq,
     num_layers=4,
-    num_cells=40,
+    num_cells=50,
     dropout_rate=0.05,
     trainer=Trainer(
         ctx="cpu",
         epochs=epochs,
         hybridize=False,
-        batch_size=24
+        batch_size=32
     ),
     distr_output=MultivariateGaussianOutput(dim=dim)
 )
@@ -210,7 +210,7 @@ for i in range(num_samples):
     y_pred.append(forecasts[0].samples[i].transpose()[0].tolist())
 
 y_pred = np.array(y_pred)
-y_true = reco[train_stop:train_stop+prediction_length]
+y_true = temp[train_stop: test_stop]
 mape = mean_absolute_percentage_error(y_true, np.mean(y_pred, axis=0))
 
 rmse = sqrt(mean_squared_error(y_true, np.mean(y_pred, axis=0)))
