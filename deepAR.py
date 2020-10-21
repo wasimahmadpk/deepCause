@@ -51,7 +51,7 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
 # Parameters
 freq = 'D'
-dim = 2
+dim = 4
 epochs = 125
 win_size = 48
 
@@ -78,14 +78,14 @@ test_stop = train_stop + prediction_length
 # long = dwd['Long']
 # lat = dwd['Lat']
 
-"Load fluxnet 2015 data for grassland IT-Mbo site"
-fluxnet = pd.read_csv("/home/ahmad/PycharmProjects/deepCause/datasets/fluxnet2015/FLX_IT-MBo_FLUXNET2015_SUBSET_2003-2013_1-4/FLX_IT-MBo_FLUXNET2015_SUBSET_HH_2003-2013_1-4.csv")
-org = fluxnet['SW_IN_F']
-otemp = fluxnet['TA_F']
-ovpd = fluxnet['VPD_F']
-oppt = fluxnet['P_F']
-ogpp = fluxnet['GPP_DT_VUT_50']
-oreco = fluxnet['RECO_NT_VUT_50']
+# "Load fluxnet 2015 data for grassland IT-Mbo site"
+# fluxnet = pd.read_csv("/home/ahmad/PycharmProjects/deepCause/datasets/fluxnet2015/FLX_IT-MBo_FLUXNET2015_SUBSET_2003-2013_1-4/FLX_IT-MBo_FLUXNET2015_SUBSET_HH_2003-2013_1-4.csv")
+# org = fluxnet['SW_IN_F']
+# otemp = fluxnet['TA_F']
+# ovpd = fluxnet['VPD_F']
+# oppt = fluxnet['P_F']
+# ogpp = fluxnet['GPP_DT_VUT_50']
+# oreco = fluxnet['RECO_NT_VUT_50']
 # plt.hist(oppt, 1000)
 # plt.show()
 
@@ -104,7 +104,7 @@ gpp = normalize(down_sample(ogpp, win_size))
 reco = normalize(down_sample(oreco, win_size))
 # vpd = normalize(down_sample(ovpd, win_size))
 # ppt = normalize(down_sample(oppt, win_size))
-intervene = np.random.choice(rg, len(reco))
+intervene = np.random.choice(temp, len(reco))
 
 
 # corr1 = np.corrcoef(temp, intervene)
@@ -131,9 +131,8 @@ intervene = np.random.choice(rg, len(reco))
 train_ds = ListDataset(
     [
          {'start': "06/01/2003 00:00:00", 
-          'target': [
-                    temp[start: train_stop], rg[start: train_stop]
-                     ]
+          'target': [reco[start: train_stop], rg[start: train_stop],
+                    temp[start: train_stop], gpp[start: train_stop]]
           }
     ],
     freq=freq,
@@ -143,9 +142,8 @@ train_ds = ListDataset(
 test_ds = ListDataset(
     [
         {'start': "06/01/2003 00:00:00",
-         'target': [
-                   temp[start: test_stop], rg[start: test_stop]
-                    ]
+         'target': [reco[start: test_stop], rg[start: test_stop],
+                    intervene[start: test_stop], gpp[start: test_stop]]
          }
     ],
     freq=freq,
@@ -210,12 +208,12 @@ for i in range(num_samples):
     y_pred.append(forecasts[0].samples[i].transpose()[0].tolist())
 
 y_pred = np.array(y_pred)
-y_true = temp[train_stop: test_stop]
+y_true = reco[train_stop: test_stop]
 mape = mean_absolute_percentage_error(y_true, np.mean(y_pred, axis=0))
 
 rmse = sqrt(mean_squared_error(y_true, np.mean(y_pred, axis=0)))
 print(f"RMSE: {rmse}, MAPE:{mape}%")
-print("Causal strength: ", math.log(rmse/0.5870), 2)
+print("Causal strength: ", math.log(rmse/0.8284), 2)
 
 plot_forecasts(tss, forecasts, past_length=33, num_plots=4)
 
