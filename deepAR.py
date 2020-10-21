@@ -143,7 +143,7 @@ test_ds = ListDataset(
     [
         {'start': "06/01/2003 00:00:00",
          'target': [reco[start: test_stop], rg[start: test_stop],
-                    intervene[start: test_stop], gpp[start: test_stop]]
+                    temp[start: test_stop], gpp[start: test_stop]]
          }
     ],
     freq=freq,
@@ -213,7 +213,7 @@ mape = mean_absolute_percentage_error(y_true, np.mean(y_pred, axis=0))
 
 rmse = sqrt(mean_squared_error(y_true, np.mean(y_pred, axis=0)))
 print(f"RMSE: {rmse}, MAPE:{mape}%")
-print("Causal strength: ", math.log(rmse/0.8284), 2)
+print("Causal strength: ", math.log(rmse/0.2030), 2)
 
 plot_forecasts(tss, forecasts, past_length=33, num_plots=4)
 
