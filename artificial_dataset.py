@@ -18,11 +18,11 @@ class ArtificialDataset:
         self.et = et
         self.egpp = egpp
         self.ereco = ereco
-        self.T, self.Gpp, self.Reco = list(np.zeros(10)), list(np.zeros(10)), list(np.zeros(10))
+        self.T, self.Gpp, self.Reco = list(np.zeros(25)), list(np.zeros(25)), list(np.zeros(25))
 
     def generate_data(self):
 
-        for t in range(10, self.time_steps-10):
+        for t in range(25, self.time_steps-25):
             self.T.append(C.get('c1')*self.T[t-Tao.get('t1')] + C.get('c2')*self.Rg[t-Tao.get('t2')] + et[t])
             self.Gpp.append(C.get('c3')*self.Rg[t-Tao.get('t3')]*self.T[t-Tao.get('t4')] + egpp[t])
             self.Reco.append(C.get('c4')*self.Gpp[t-Tao.get('t5')]*C.get('c5')**((self.T[t-Tao.get('t6')]-Tref)/10) + ereco[t])
@@ -32,7 +32,8 @@ class ArtificialDataset:
 
         Ps = np.sqrt(np.mean(np.array(s)**2))
         Pn = np.sqrt(np.mean(np.array(n)**2))
-        return 10*math.log(((Ps-Pn)/Pn), 10)
+        SNR = Ps/Pn
+        return 10*math.log(SNR, 10)        # 10*math.log(((Ps-Pn)/Pn), 10)
 
 
 if __name__ == '__main__':
@@ -48,15 +49,15 @@ if __name__ == '__main__':
 
     time_steps, Tref = len(rg), 15
     et = np.random.normal(0.0001, 0.005, time_steps)
-    egpp = np.random.normal(0.00015, 0.0015, time_steps)
-    ereco = np.random.normal(0.0005, 0.0005, time_steps)
+    egpp = np.random.normal(0.0015, 0.015, time_steps)
+    ereco = np.random.normal(0.002, 0.0035, time_steps)
 
-    C = {'c1': 0.9, 'c2': 1.75, 'c3': 0.75, 'c4': 0.65, 'c5': 2.50}          # c2:1.75, c5:1.85
-    Tao = {'t1': 2, 't2': 3, 't3': 6, 't4': 5, 't5': 1, 't6': 4}
+    C = {'c1': 0.9, 'c2': 1, 'c3': 1, 'c4': 0.65, 'c5': 1}          # c2:1.75, c5:1.85
+    Tao = {'t1': 9, 't2': 12, 't3': 12, 't4': 15, 't5': 3, 't6': 4}
     data_obj = ArtificialDataset(nrg, time_steps, Tref, C, Tao, et, egpp, ereco)
     rg, tair, gpp, reco = data_obj.generate_data()
 
-    data = {'Rg': rg[10:], 'T': tair, 'GPP': gpp, 'Reco': reco}
+    data = {'Rg': rg[25:], 'T': tair, 'GPP': gpp, 'Reco': reco}
     df = pd.DataFrame(data, columns=['Rg', 'T', 'GPP', 'Reco'])
     df.to_csv(r'/home/ahmad/PycharmProjects/deepCause/datasets/ncdata/artificial_data.csv', index_label=False, header=True)
 
