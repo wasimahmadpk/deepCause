@@ -60,7 +60,7 @@ current_time = now.strftime("%H:%M:%S")
 print("Code updated at: ", current_time)
 
 training_length = round((3984)/win_size)  # data for 2 month (Jun-July-Aug*)
-prediction_length = round((336)/win_size)  # data for 2*2 days (last 3 days of Aug)
+prediction_length = round((672)/win_size)  # data for 2*2 days (last 3 days of Aug)
 num_samples = 24
 
 start = round(8640/win_size)
