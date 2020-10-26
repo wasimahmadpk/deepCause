@@ -115,6 +115,8 @@ dfname = pathlib.Path("tseries.dist")
 with open(dfname, 'rb') as f:
     fdist = pickle.load(f)
 
+print(fdist.summary())
+
 intervene = np.random.choice(temp, len(reco))
 
 
@@ -190,13 +192,13 @@ if not filename.exists():
 rmselist = []
 mapelist = []
 
-for i in range(10):
-    rmse, mape = modelTest(test_ds, num_samples, reco, train_stop, test_stop)
-    rmselist.append(rmse)
-    mapelist.append(mape)
+#for i in range(10):
+ #   rmse, mape = modelTest(test_ds, num_samples, reco, train_stop, test_stop)
+  #  rmselist.append(rmse)
+   # mapelist.append(mape)
 
-rmse = np.mean(rmselist)
-mape = np.mean(mapelist)
+#rmse = np.mean(rmselist)
+#mape = np.mean(mapelist)
 # # load the model from disk
 # predictor = pickle.load(open(filename, 'rb'))
 #
@@ -235,8 +237,8 @@ mape = np.mean(mapelist)
 #
 # rmse = sqrt(mean_squared_error(y_true, np.mean(y_pred, axis=0)))
 
-print(f"RMSE: {rmse}, MAPE:{mape}%")
-print("Causal strength: ", math.log(rmse/0.1690), 2)
+#print(f"RMSE: {rmse}, MAPE:{mape}%")
+#print("Causal strength: ", math.log(rmse/0.1690), 2)
 
 # plot_forecasts(tss, forecasts, past_length=33, num_plots=4)
 #
