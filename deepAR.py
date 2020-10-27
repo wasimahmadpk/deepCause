@@ -7,9 +7,9 @@ import numpy as np
 import pathlib
 from os import path
 from math import sqrt
+from fitter import Fitter
 from netCDF4 import Dataset
 from datetime import datetime
-from fit_dist import fitDist
 import matplotlib.pyplot as plt
 from itertools import islice
 from gluonts.evaluation import Evaluator
@@ -110,7 +110,10 @@ reco = normalize(down_sample(oreco, win_size))
 # **********Fit distribution **********************
 dfname = pathlib.Path("tseries.dist")
 if not dfname.exists():
-    fdist = fitDist(temp)
+    print('fitting distribution')
+    fdist = Fitter(temp, distributions=['johnsonsb'])
+    fdist.fit()
+    fdist.summary()
     with open(dfname, 'wb') as f:
         pickle.dump(fdist, f)
 
@@ -164,7 +167,7 @@ test_ds = ListDataset(
     [
         {'start': "06/01/2003 00:00:00",
          'target': [reco[start: test_stop], rg[start: test_stop],
-                    temp[start: test_stop], gpp[start: test_stop]]
+                    intervene[start: test_stop], gpp[start: test_stop]]
          }
     ],
     freq=freq,
@@ -246,7 +249,7 @@ mape = np.mean(mapelist)
 # rmse = sqrt(mean_squared_error(y_true, np.mean(y_pred, axis=0)))
 
 print(f"RMSE: {rmse}, MAPE:{mape}%")
-print("Causal strength: ", math.log(rmse/0.5858), 2)
+print("Causal strength: ", math.log(rmse/0.4491), 2)
 
 # plot_forecasts(tss, forecasts, past_length=33, num_plots=4)
 #
