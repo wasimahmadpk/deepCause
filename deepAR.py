@@ -109,9 +109,10 @@ reco = normalize(down_sample(oreco, win_size))
 
 # **********Fit distribution **********************
 dfname = pathlib.Path("tseries.dist")
-# fdist = fitDist(temp)
-# with open(dfname, 'wb') as f:
-#     pickle.dump(fdist, f)
+if not dfname.exists():
+    fdist = fitDist(temp)
+    with open(dfname, 'wb') as f:
+        pickle.dump(fdist, f)
 
 with open(dfname, 'rb') as f:
     fdist = pickle.load(f)
@@ -245,7 +246,7 @@ mape = np.mean(mapelist)
 # rmse = sqrt(mean_squared_error(y_true, np.mean(y_pred, axis=0)))
 
 print(f"RMSE: {rmse}, MAPE:{mape}%")
-print("Causal strength: ", math.log(rmse/0.5514), 2)
+print("Causal strength: ", math.log(rmse/0.5858), 2)
 
 # plot_forecasts(tss, forecasts, past_length=33, num_plots=4)
 #
