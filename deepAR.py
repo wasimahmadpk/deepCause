@@ -1,4 +1,5 @@
 import math
+import random
 import netCDF
 import pickle
 import pandas as pd
@@ -61,11 +62,11 @@ now = datetime.now()
 current_time = now.strftime("%H:%M:%S")
 print("Code updated at: ", current_time)
 
-training_length = round((3984)/win_size)  # data for 2 month (Jun-July-Aug*)
-prediction_length = round((672)/win_size)  # data for 2*2 days (last 3 days of Aug)
-num_samples = 24
+training_length = round((3360)/win_size)  # data for 2 month (Jun-July-Aug*)
+prediction_length = round((960)/win_size)  # data for 2*2 days (last 3 days of Aug)
+num_samples = 16
 
-start = round(8640/win_size)
+start = round(7200/win_size)
 train_stop = start + training_length
 test_stop = train_stop + prediction_length
 # *********************************************************
@@ -115,9 +116,15 @@ dfname = pathlib.Path("tseries.dist")
 with open(dfname, 'rb') as f:
     fdist = pickle.load(f)
 
-print(fdist.summary())
+dist_pdf = fdist.fitted_pdf.get(list(fdist.get_best().keys())[0])
+print(fdist.get_best().get(list(fdist.get_best().keys())[0]))
+# fdist.summary()
+# plt.plot(dist_pdf)
+# plt.show()
 
-intervene = np.random.choice(temp, len(reco))
+intervene = random.choices(np.linspace(fdist.get_best().get('johnsonsb')[2], fdist.get_best().get('johnsonsb')[2] + fdist.get_best().get('johnsonsb')[3],
+                                       len(dist_pdf.tolist())), weights=tuple(dist_pdf),
+                                       k=len(temp))
 
 
 # corr1 = np.corrcoef(temp, intervene)
@@ -156,7 +163,7 @@ test_ds = ListDataset(
     [
         {'start': "06/01/2003 00:00:00",
          'target': [reco[start: test_stop], rg[start: test_stop],
-                    intervene[start: test_stop], gpp[start: test_stop]]
+                    temp[start: test_stop], gpp[start: test_stop]]
          }
     ],
     freq=freq,
@@ -170,7 +177,7 @@ estimator = DeepAREstimator(
     freq=freq,
     num_layers=4,
     num_cells=50,
-    dropout_rate=0.05,
+    dropout_rate=0.075,
     trainer=Trainer(
         ctx="cpu",
         epochs=epochs,
@@ -192,13 +199,13 @@ if not filename.exists():
 rmselist = []
 mapelist = []
 
-#for i in range(10):
- #   rmse, mape = modelTest(test_ds, num_samples, reco, train_stop, test_stop)
-  #  rmselist.append(rmse)
-   # mapelist.append(mape)
+for i in range(10):
+   rmse, mape = modelTest(test_ds, num_samples, reco, train_stop, test_stop)
+   rmselist.append(rmse)
+   mapelist.append(mape)
 
-#rmse = np.mean(rmselist)
-#mape = np.mean(mapelist)
+rmse = np.mean(rmselist)
+mape = np.mean(mapelist)
 # # load the model from disk
 # predictor = pickle.load(open(filename, 'rb'))
 #
@@ -237,8 +244,8 @@ mapelist = []
 #
 # rmse = sqrt(mean_squared_error(y_true, np.mean(y_pred, axis=0)))
 
-#print(f"RMSE: {rmse}, MAPE:{mape}%")
-#print("Causal strength: ", math.log(rmse/0.1690), 2)
+print(f"RMSE: {rmse}, MAPE:{mape}%")
+print("Causal strength: ", math.log(rmse/0.5514), 2)
 
 # plot_forecasts(tss, forecasts, past_length=33, num_plots=4)
 #
