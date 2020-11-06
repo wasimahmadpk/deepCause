@@ -50,9 +50,9 @@ if __name__ == '__main__':
     time_steps, Tref = len(rg), 15
     et = np.random.normal(0.0001, 0.005, time_steps)
     egpp = np.random.normal(0.001, 0.01, time_steps)
-    ereco = np.random.normal(0.0025, 0.0043, time_steps)
+    ereco = np.random.normal(0.004, 0.006, time_steps)
 
-    C = {'c1': 0.95, 'c2': .9, 'c3': 0.5, 'c4': 0.55, 'c5': 1.75}          # c2:1.75, c5:1.85
+    C = {'c1': 0.95, 'c2': .9, 'c3': 0.5, 'c4': 0.55, 'c5': 2.50}          # c2:1.75, c5:1.85
     Tao = {'t1': 2, 't2': 4, 't3': 6, 't4': 8, 't5': 10, 't6': 12}
     data_obj = ArtificialDataset(nrg, time_steps, Tref, C, Tao, et, egpp, ereco)
     rg, tair, gpp, reco = data_obj.generate_data()
