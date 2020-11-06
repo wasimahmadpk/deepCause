@@ -171,9 +171,10 @@ if not filename.exists():
 #                                        k=len(temp))
 # intervene = np.empty(len(ats))
 # intervene.fill(np.mean(dts))
+intervene = np.zeros(len(dts)) + np.random.normal(0, 0.0, len(dts))
 
-intervene = np.random.choice(cts, len(dts)) + np.random.normal(0, 0.1, len(dts))
-
+# intervene = np.random.choice(cts, len(dts)) + np.random.normal(0, 0.15, len(dts))
+corr = np.corrcoef(ats, intervene)
 # corr1 = np.corrcoef(temp, intervene)
 # corr2 = np.corrcoef(gpp, intervene)
 # corr3 = np.corrcoef(reco, intervene)
@@ -209,7 +210,7 @@ for i in range(10):
         [
             {'start': "01/01/1961 00:00:00",
              'target': [ats[start: test_stop], bts[start: test_stop],
-                        cts[start: test_stop], dts[start: test_stop]]
+                        cts[start: test_stop], intervene[start: test_stop]]
              }
         ],
         freq=freq,
@@ -223,5 +224,6 @@ for i in range(10):
 rmse = np.mean(rmselist)
 mape = np.mean(mapelist)
 
+print("Correlation Coefficient (Time series, intervention): ", corr)
 print(f"RMSE: {rmse}, MAPE:{mape}%")
 print("Causal strength: ", math.log(rmse/2435.0911), 2)
