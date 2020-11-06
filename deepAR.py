@@ -15,6 +15,7 @@ from itertools import islice
 from gluonts.evaluation import Evaluator
 from gluonts.dataset.common import ListDataset
 from gluonts.model.deepar import DeepAREstimator
+
 from gluonts.model.deepar._network import DeepARTrainingNetwork
 from gluonts.trainer import Trainer
 from model_test import modelTest
@@ -55,31 +56,32 @@ def mean_absolute_percentage_error(y_true, y_pred):
 # Parameters
 freq = 'D'
 dim = 4
-epochs = 125
-win_size = 48
+epochs = 100
+win_size = 24
 
 now = datetime.now()
 current_time = now.strftime("%H:%M:%S")
 print("Code updated at: ", current_time)
 
-training_length = round((3360)/win_size)  # data for 2 month (Jun-July-Aug*)
-prediction_length = round((960)/win_size)  # data for 2*2 days (last 3 days of Aug)
-num_samples = 16
+training_length = 950
+prediction_length = 50
+num_samples = 24
 
-start = round(7200/win_size)
+start = 33
 train_stop = start + training_length
 test_stop = train_stop + prediction_length
 # *********************************************************
 
 # "Load meteriological data (DWD)"
-# col_names = ['Temp', 'SS_Hrs', 'Alt', 'PPT', 'Long', 'Lat']
-# dwd = pd.read_csv("/home/ahmad/PycharmProjects/deepCause/datasets/DWD/DWD.csv", names = col_names)
-# temp = dwd['Temp']
-# sshrs = dwd['SS_Hrs']
-# alt = dwd['Alt']
-# ppt = dwd['PPT']
-# long = dwd['Long']
-# lat = dwd['Lat']
+# col_names = ['temperature', 'sunshine', 'altitude', 'precipitation', 'longitude', 'latitude']
+# dwd = pd.read_csv("/home/ahmad/PycharmProjects/deepCause/datasets/DWD/DWD_labels.csv", sep=';')
+# print(dwd.head())
+# temp = dwd['temperature']
+# sunshine = dwd['sunshine']
+# alt = dwd['altitude']
+# ppt = dwd['precipitation']
+# long = dwd['longitude']
+# lat = dwd['latitude']
 
 # "Load fluxnet 2015 data for grassland IT-Mbo site"
 # fluxnet = pd.read_csv("/home/ahmad/PycharmProjects/deepCause/datasets/fluxnet2015/FLX_IT-MBo_FLUXNET2015_SUBSET_2003-2013_1-4/FLX_IT-MBo_FLUXNET2015_SUBSET_HH_2003-2013_1-4.csv")
@@ -93,43 +95,84 @@ test_stop = train_stop + prediction_length
 # plt.show()
 
 # LOad synthetic data
-syndata = pd.read_csv("/home/ahmad/PycharmProjects/deepCause/datasets/ncdata/artificial_data.csv")
-org = syndata['Rg']
-otemp = syndata['T']
-ogpp = syndata['GPP']
-oreco = syndata['Reco']
+syndata = pd.read_csv("/home/ahmad/PycharmProjects/deepCause/datasets/ncdata/synthetic_data.csv")
+ats = down_sample(np.array(syndata['Rg']), win_size)
+bts = down_sample(np.array(syndata['T']), win_size)
+cts = down_sample(np.array(syndata['GPP']), win_size)
+dts = down_sample(np.array(syndata['Reco']), win_size)
 
-# ************ Normalize the features *************
-rg = normalize(down_sample(org, win_size))
-temp = normalize(down_sample(otemp, win_size))
-gpp = normalize(down_sample(ogpp, win_size))
-reco = normalize(down_sample(oreco, win_size))
+# # ************ Normalize the features *************
+# rg = normalize(down_sample(org, win_size))
+# temp = normalize(down_sample(otemp, win_size))
+# gpp = normalize(down_sample(ogpp, win_size))
+# reco = normalize(down_sample(oreco, win_size))
 # vpd = normalize(down_sample(ovpd, win_size))
 # ppt = normalize(down_sample(oppt, win_size))
+#
+# # **********Fit distribution **********************
+# dfname = pathlib.Path("tseries.dist")
+# if not dfname.exists():
+#     print('fitting distribution')
+#     fdist = Fitter(alt)
+#     fdist.fit()
+#     with open(dfname, 'wb') as f:
+#         pickle.dump(fdist, f)
 
-# **********Fit distribution **********************
-dfname = pathlib.Path("tseries.dist")
-if not dfname.exists():
-    print('fitting distribution')
-    fdist = Fitter(temp, distributions=['johnsonsb'])
-    fdist.fit()
-    fdist.summary()
-    with open(dfname, 'wb') as f:
-        pickle.dump(fdist, f)
-
-with open(dfname, 'rb') as f:
-    fdist = pickle.load(f)
-
-dist_pdf = fdist.fitted_pdf.get(list(fdist.get_best().keys())[0])
-print(fdist.get_best().get(list(fdist.get_best().keys())[0]))
-# fdist.summary()
+# with open(dfname, 'rb') as f:
+#     fdist = pickle.load(f)
+#
+# dist_pdf = fdist.fitted_pdf.get(list(fdist.get_best().keys())[0])
+# print(fdist.get_best().get(list(fdist.get_best().keys())[0]))
+# print('Best Fit: ', list(fdist.get_best().keys())[0])
+# # fdist.summary()
 # plt.plot(dist_pdf)
 # plt.show()
+#
 
-intervene = random.choices(np.linspace(fdist.get_best().get('johnsonsb')[2], fdist.get_best().get('johnsonsb')[2] + fdist.get_best().get('johnsonsb')[3],
-                                       len(dist_pdf.tolist())), weights=tuple(dist_pdf),
-                                       k=len(temp))
+train_ds = ListDataset(
+    [
+         {'start': "01/01/1961 00:00:00",
+          'target': [ats[start: train_stop], bts[start: train_stop],
+                     cts[start: train_stop], dts[start: train_stop]]
+          }
+    ],
+    freq=freq,
+    one_dim_target=False
+)
 
+# create estimator
+estimator = DeepAREstimator(
+    prediction_length=prediction_length,
+    context_length=prediction_length,
+    freq=freq,
+    num_layers=4,
+    num_cells=40,
+    dropout_rate=0.1,
+    trainer=Trainer(
+        ctx="cpu",
+        epochs=epochs,
+        hybridize=False,
+        batch_size=32
+    ),
+    distr_output=MultivariateGaussianOutput(dim=dim)
+)
+
+filename = pathlib.Path("trained_model.sav")
+if not filename.exists():
+    print("Training forecasting model....")
+    predictor = estimator.train(train_ds)
+    # save the model to disk
+    pickle.dump(predictor, open(filename, 'wb'))
+
+
+# intervene = random.choices(np.linspace(fdist.get_best().get(list(fdist.get_best().keys())[0])[2],
+#                                        fdist.get_best().get(list(fdist.get_best().keys())[0])[2] + fdist.get_best().get(list(fdist.get_best().keys())[0])[3],
+#                                        len(dist_pdf.tolist())), weights=tuple(dist_pdf),
+#                                        k=len(temp))
+# intervene = np.empty(len(ats))
+# intervene.fill(np.mean(dts))
+
+intervene = np.random.choice(cts, len(dts)) + np.random.normal(0, 0.1, len(dts))
 
 # corr1 = np.corrcoef(temp, intervene)
 # corr2 = np.corrcoef(gpp, intervene)
@@ -152,107 +195,33 @@ intervene = random.choices(np.linspace(fdist.get_best().get('johnsonsb')[2], fdi
 # print("SNR (PPT)", SNR(ppt, intervene))
 # print("SNR (VPD)", SNR(vpd, intervene))
 
-train_ds = ListDataset(
-    [
-         {'start': "06/01/2003 00:00:00", 
-          'target': [reco[start: train_stop], rg[start: train_stop],
-                    temp[start: train_stop], gpp[start: train_stop]]
-          }
-    ],
-    freq=freq,
-    one_dim_target=False
-)
-
-test_ds = ListDataset(
-    [
-        {'start': "06/01/2003 00:00:00",
-         'target': [reco[start: test_stop], rg[start: test_stop],
-                    intervene[start: test_stop], gpp[start: test_stop]]
-         }
-    ],
-    freq=freq,
-    one_dim_target=False
-)
-
-# create estimator
-estimator = DeepAREstimator(
-    prediction_length=prediction_length,
-    context_length=prediction_length,
-    freq=freq,
-    num_layers=4,
-    num_cells=50,
-    dropout_rate=0.075,
-    trainer=Trainer(
-        ctx="cpu",
-        epochs=epochs,
-        hybridize=False,
-        batch_size=32
-    ),
-    distr_output=MultivariateGaussianOutput(dim=dim)
-)
-
-filename = pathlib.Path("trained_model.sav")
-if not filename.exists():
-    print("Training forecasting model....")
-    predictor = estimator.train(train_ds)
-    # save the model to disk
-    pickle.dump(predictor, open(filename, 'wb'))
-
-
 # test model
 rmselist = []
 mapelist = []
 
 for i in range(10):
-   rmse, mape = modelTest(test_ds, num_samples, reco, train_stop, test_stop)
-   rmselist.append(rmse)
-   mapelist.append(mape)
+
+    start = start + 5
+    train_stop = start + training_length
+    test_stop = train_stop + prediction_length
+
+    test_ds = ListDataset(
+        [
+            {'start': "01/01/1961 00:00:00",
+             'target': [ats[start: test_stop], bts[start: test_stop],
+                        cts[start: test_stop], dts[start: test_stop]]
+             }
+        ],
+        freq=freq,
+        one_dim_target=False
+    )
+
+    rmse, mape = modelTest(test_ds, num_samples, ats, train_stop, test_stop, i)
+    rmselist.append(rmse)
+    mapelist.append(mape)
 
 rmse = np.mean(rmselist)
 mape = np.mean(mapelist)
-# # load the model from disk
-# predictor = pickle.load(open(filename, 'rb'))
-#
-# forecast_it, ts_it = make_evaluation_predictions(
-#     dataset=test_ds,  # test dataset
-#     predictor=predictor,  # predictor
-#     num_samples=num_samples,  # number of sample paths we want for evaluation
-# )
-#
-#
-# def plot_forecasts(tss, forecasts, past_length, num_plots):
-#
-#     for target, forecast in islice(zip(tss, forecasts), num_plots):
-#
-#         ax = target[-past_length:][0].plot(figsize=(14, 10), linewidth=2)
-#         forecast.copy_dim(0).plot(color='g')
-#         plt.grid(which='both')
-#         plt.legend(["observations", "median prediction", "90% confidence interval", "50% confidence interval"])
-#         plt.title("Forecasting Reco time series")
-#         plt.xlabel("Timestamp")
-#         plt.ylabel('Reco')
-#         plt.show()
-#
-#
-# forecasts = list(forecast_it)
-# tss = list(ts_it)
-#
-# y_pred = []
-#
-# for i in range(num_samples):
-#     y_pred.append(forecasts[0].samples[i].transpose()[0].tolist())
-#
-# y_pred = np.array(y_pred)
-# y_true = reco[train_stop: test_stop]
-# mape = mean_absolute_percentage_error(y_true, np.mean(y_pred, axis=0))
-#
-# rmse = sqrt(mean_squared_error(y_true, np.mean(y_pred, axis=0)))
 
 print(f"RMSE: {rmse}, MAPE:{mape}%")
-print("Causal strength: ", math.log(rmse/0.4491), 2)
-
-# plot_forecasts(tss, forecasts, past_length=33, num_plots=4)
-#
-# evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
-# agg_metrics, item_metrics = evaluator(iter([pd.DataFrame((tss[0][:][0]))]), iter([forecasts[0].copy_dim(0)]), num_series=len(test_ds))
-# print("Performance metrices", agg_metrics)
+print("Causal strength: ", math.log(rmse/2435.0911), 2)
