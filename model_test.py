@@ -25,7 +25,7 @@ def mean_absolute_percentage_error(y_true, y_pred):
     #    y_true, y_pred = _check_1d_array(y_true, y_pred)
     return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
-def modelTest(test_ds, num_samples, data, train_stop, test_stop):
+def modelTest(test_ds, num_samples, data, train_stop, test_stop, count):
     filename = pathlib.Path("trained_model.sav")
     # load the model from disk
     predictor = pickle.load(open(filename, 'rb'))
@@ -65,7 +65,9 @@ def modelTest(test_ds, num_samples, data, train_stop, test_stop):
     mape = mean_absolute_percentage_error(y_true, np.mean(y_pred, axis=0))
     rmse = sqrt(mean_squared_error(y_true, np.mean(y_pred, axis=0)))
 
-    plot_forecasts(tss, forecasts, past_length=35, num_plots=4)
+    counter = 9
+    if count == counter:
+        plot_forecasts(tss, forecasts, past_length=150, num_plots=1)
 
     evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
     agg_metrics, item_metrics = evaluator(iter([pd.DataFrame((tss[0][:][0]))]), iter([forecasts[0].copy_dim(0)]), num_series=len(test_ds))
