@@ -28,7 +28,7 @@ def down_sample(data, win_size):
 # mdata = mdata[['realgdp','realcons','realinv']]
 # mdata.index = pandas.DatetimeIndex(quarterly)
 # data = np.log(mdata).diff().dropna()
-win_size = 24
+win_size = 1
 
 "Load average energy consumpation data (hourly)"
 syndata = pd.read_csv("/home/ahmad/PycharmProjects/deepCause/datasets/ncdata/synthetic_data.csv", sep=',')
@@ -37,7 +37,8 @@ bts = down_sample(np.array(syndata['T']), win_size)
 cts = down_sample(np.array(syndata['GPP']), win_size)
 dts = down_sample(np.array(syndata['Reco']), win_size)
 
-data = pd.DataFrame({'Rg': ats, 'T': bts, 'GPP': cts, 'Reco': dts}, columns=['Rg', 'T', 'GPP', 'Reco'])
+col_list = ['Rg', 'T', 'GPP', 'Reco']
+data = pd.DataFrame({'Rg': ats, 'T': bts, 'GPP': cts, 'Reco': dts}, columns=col_list)
 print(data.head())
 
 # "Load fluxnet data"
@@ -47,6 +48,8 @@ print(data.head())
 
 # make a VAR model
 model = VAR(data)
-results = model.fit(4)
+results = model.fit(2)
 # print(results.summary())
-print(results.test_causality('Rg', ['T'], kind='f'))
+for i in range(len(col_list)):
+    for j in range(len(col_list)):
+        print(results.test_causality(col_list[j], col_list[i], kind='f'))
