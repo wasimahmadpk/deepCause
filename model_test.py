@@ -3,6 +3,7 @@ import netCDF
 import pickle
 import pandas as pd
 import numpy as np
+import mxnet as mx
 import pathlib
 from os import path
 from math import sqrt
@@ -15,18 +16,21 @@ from gluonts.dataset.common import ListDataset
 from gluonts.model.deepar import DeepAREstimator
 from gluonts.model.deepar._network import DeepARTrainingNetwork
 from gluonts.trainer import Trainer
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 from gluonts.distribution.multivariate_gaussian import MultivariateGaussianOutput
 from gluonts.evaluation.backtest import make_evaluation_predictions
 
-def mean_absolute_percentage_error(y_true, y_pred):
-    ## Note: does not handle mix 1d representation
-    #if _is_1d(y_true):
-    #    y_true, y_pred = _check_1d_array(y_true, y_pred)
-    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+np.random.seed(1)
+mx.random.seed(2)
 
-def modelTest(test_ds, num_samples, data, train_stop, test_stop, count):
-    filename = pathlib.Path("trained_model.sav")
+
+def mean_absolute_percentage_error(y_true, y_pred):
+
+    return np.mean(np.abs((y_true - y_pred)) / np.abs(y_true))
+
+
+def modelTest(model_path, test_ds, num_samples, data, idx, prediction_length, count, intervention, in_type):
+    filename = pathlib.Path(model_path)
     # load the model from disk
     predictor = pickle.load(open(filename, 'rb'))
 
@@ -36,20 +40,24 @@ def modelTest(test_ds, num_samples, data, train_stop, test_stop, count):
         num_samples=num_samples,  # number of sample paths we want for evaluation
     )
 
+    if intervention == True:
+        heuristic_itn_types = ['Mean', 'In-dist', 'Out-dist']
+        int_title = 'After ' + heuristic_itn_types[in_type] + ' Intervention'
+    else:
+        int_title = ''
 
     def plot_forecasts(tss, forecasts, past_length, num_plots):
 
         for target, forecast in islice(zip(tss, forecasts), num_plots):
 
-            ax = target[-past_length:][0].plot(figsize=(14, 10), linewidth=2)
-            forecast.copy_dim(0).plot(color='g')
+            ax = target[-past_length:][idx].plot(figsize=(14, 10), linewidth=2)
+            forecast.copy_dim(idx).plot(color='g')
             plt.grid(which='both')
             plt.legend(["observations", "median prediction", "90% confidence interval", "50% confidence interval"])
-            plt.title("Forecasting Reco time series")
+            plt.title(f"Forecasting time series {int_title}")
             plt.xlabel("Timestamp")
-            plt.ylabel('Reco')
+            plt.ylabel('Target Time-series')
             plt.show()
-
 
     forecasts = list(forecast_it)
     tss = list(ts_it)
@@ -57,20 +65,23 @@ def modelTest(test_ds, num_samples, data, train_stop, test_stop, count):
     y_pred = []
 
     for i in range(num_samples):
-        y_pred.append(forecasts[0].samples[i].transpose()[0].tolist())
+        y_pred.append(forecasts[0].samples[i].transpose()[idx].tolist())
 
     y_pred = np.array(y_pred)
-    y_true = data[train_stop: test_stop]
+    y_true = data[-prediction_length:]
 
     mape = mean_absolute_percentage_error(y_true, np.mean(y_pred, axis=0))
-    rmse = sqrt(mean_squared_error(y_true, np.mean(y_pred, axis=0)))
+    mse = mean_squared_error(y_true, np.mean(y_pred, axis=0))
+    mae = mean_absolute_error(y_true, np.mean(y_pred, axis=0))
 
-    counter = 9
-    if count == counter:
+    # meanerror = np.mean(np.mean(y_pred, axis=0))
+
+    counter = -1
+    if count < counter:
         plot_forecasts(tss, forecasts, past_length=150, num_plots=1)
+        evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
+        agg_metrics, item_metrics = evaluator(iter([pd.DataFrame((tss[0][:][idx]))]),
+                                              iter([forecasts[0].copy_dim(idx)]), num_series=len(test_ds))
+        print("Performance metrics", agg_metrics)
 
-    evaluator = Evaluator(quantiles=[0.1, 0.5, 0.9])
-    agg_metrics, item_metrics = evaluator(iter([pd.DataFrame((tss[0][:][0]))]), iter([forecasts[0].copy_dim(0)]), num_series=len(test_ds))
-    print("Performance metrices", agg_metrics)
-
-    return rmse, mape
+    return mse, mape, list(np.mean(y_pred, axis=0))
