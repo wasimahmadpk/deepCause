@@ -1,4 +1,5 @@
 import numpy as np
+import random
 import pandas as pd
 import matplotlib.pyplot as plt
 from netCDF4 import Dataset
@@ -8,16 +9,18 @@ import math
 
 class SyntheticDataset:
 
-    def __init__(self, Rg, time_steps, Tref, C, Tao, et, egpp, ereco):
+    def __init__(self, xts, time_steps, Tref, C, Tao, ey, ez, er):
 
         self.time_steps = time_steps
-        self.Rg = Rg
+        self.Xts = xts
         self.C = C
         self.Tao = Tao
-        self.et = et
-        self.egpp = egpp
-        self.ereco = ereco
-        self.T, self.Gpp, self.Reco = list(np.zeros(15)), list(np.zeros(15)), list(np.zeros(15))
+        self.ey = ey
+        self.ez = ez
+        self.er = er
+        self.Yts = list(np.zeros(15))
+        self.Zts = list(np.zeros(15))
+        self.Rts = list(np.zeros(15))
 
     def normalize(self, var):
         nvar = (np.array(var) - np.mean(var)) / np.std(var)
@@ -36,10 +39,10 @@ class SyntheticDataset:
     def generate_data(self):
 
         for t in range(15, self.time_steps):
-            self.T.append(C.get('c1')*self.Rg[t-Tao.get('t1')])
-            self.Gpp.append(C.get('c2')*self.T[t-Tao.get('t2')])
-            self.Reco.append(C.get('c3')**((self.T[t-Tao.get('t3')])/10) + C.get('c4')*self.Gpp[t-Tao.get('t4')])
-        return self.Rg, self.T, self.Gpp, self.Reco
+            self.Yts.append(C.get('c1')*self.Xts[t-Tao.get('t1')] + ey[t])
+            self.Zts.append(C.get('c2')**((self.Xts[t-Tao.get('t2')])/2 + ez[t]))
+            self.Rts.append(C.get('c3')*self.Yts[t-Tao.get('t3')] + C.get('c4')*self.Zts[t-Tao.get('t4')] + er[t])
+        return self.Xts, self.Yts, self.Zts, self.Rts
 
     def SNR(self, s, n):
 
@@ -51,59 +54,68 @@ class SyntheticDataset:
 
 if __name__ == '__main__':
 
-    # rg = np.random.normal(9, 3, 1005)
+    xts = np.random.normal(0, 0.5, 30015)
+    t = np.linspace(0, 20, 30015)
+    season = np.cos(2 * np.pi * 10 * t)
+    xtss = xts + np.abs(season)
+    stateone = np.random.normal(0.3, 0.3, 1000)
+    anom_idxone = random.sample(list(range(30015)), 1000)
 
-    "Load average energy consumpation data (hourly)"
-    path = '/home/ahmad/PycharmProjects/deepCause/datasets/AEC Hourly/AEP_hourly.csv'  # Your filename
-    energy = pd.read_csv(path, sep=';')
-    print(energy.head())
-    rg = energy['AEP_MW']
+    # statetwo = np.random.normal(1.25, 0.15, 2000)
+    anom_idxtwo = random.sample(list(range(30015)), 1000)
 
-    time_steps, Tref = round(len(rg)), 15
-    et = np.random.normal(2.75, 3, time_steps)
-    egpp = np.random.normal(3, 5, time_steps)
-    ereco = np.random.normal(2.5, 7, time_steps)
+    for s in range(len(stateone)):
+        xtss[anom_idxone[s]] = stateone[s]
+        # xtss[anom_idxtwo[s]] = statetwo[s]
 
-    C = {'c1': 0.75, 'c2': .9, 'c3': 0.99, 'c4': 0.77, 'c5': .88}          # c2:1.75, c5:1.85
-    Tao = {'t1': 5, 't2': 7, 't3': 9, 't4': 11, 't5': 12, 't6': 13}
-    data_obj = SyntheticDataset(rg, time_steps, Tref, C, Tao, et, egpp, ereco)
-    rg, temp, gpp, reco = data_obj.generate_data()
+    time_steps, Tref = round(len(xts)), 15
+    ey = np.random.normal(0, 0.10, time_steps)
+    ez = np.random.normal(0, 0.11, time_steps)
+    er = np.random.normal(0, 0.15, time_steps)
 
-    data = {'Rg': rg[15:], 'T': temp[15:], 'GPP': gpp[15:], 'Reco': reco[15:]}
-    df = pd.DataFrame(data, columns=['Rg', 'T', 'GPP', 'Reco'])
+    C = {'c1': 0.95, 'c2': 0.75, 'c3': 1.25, 'c4': 0.90, 'c5': 0.80}          # c2:1.75, c5:1.85
+    Tao = {'t1': 2, 't2': 3, 't3': 4, 't4': 5, 't5': 6, 't6': 7}
+    data_obj = SyntheticDataset(xtss, time_steps, Tref, C, Tao, ey, ez, er)
+    Xts, Yts, Zts, Rts = data_obj.generate_data()
+
+    corr1 = np.corrcoef(ey, ez)
+
+    print("Correlation Coefficient (ey, ez): ", corr1)
+
+    # print("SNR (Temperature)", data_obj.SNR(Yts, ez))
+
+    data = {'Xts': Xts[15:], 'Yts': Yts[15:], 'Zts': Zts[15:], 'Rts': Rts[15:]}
+    df = pd.DataFrame(data, columns=['Xts', 'Yts', 'Zts', 'Rts'])
     df.to_csv(r'/home/ahmad/PycharmProjects/deepCause/datasets/ncdata/synthetic_data.csv', index_label=False, header=True)
 
-    corr1 = np.corrcoef(et, egpp)
-    corr2 = np.corrcoef(et, ereco)
-    corr3 = np.corrcoef(ereco, egpp)
-
-    print("Correlation Coefficient (et, egpp): ", corr1)
-    print("Correlation Coefficient (et, ereco): ", corr2)
-    print("Correlation Coefficient (ereco, egpp): ", corr3)
-
-    print("SNR (Temperature)", data_obj.SNR(temp, et))
-    print("SNR (GPP)", data_obj.SNR(gpp, egpp))
-    print("SNR (Reco)", data_obj.SNR(reco, ereco))
-
-    temp = temp + et
-    gpp = gpp + egpp
-    reco = reco + ereco
-
+    # data_obj = SyntheticDataset(xtss, time_steps, Tref, C, Tao, ey, ez, er)
+    # Xts, Yts, Zts, Rts = data_obj.generate_data()
+    #
+    # corr1 = np.corrcoef(ey, ez)
+    #
+    # print("Correlation Coefficient (ey, ez): ", corr1)
+    #
+    # # print("SNR (Temperature)", data_obj.SNR(Yts, ez))
+    #
+    # data = {'Xts': Xts[15:], 'Yts': Yts[15:], 'Zts': Zts[15:], 'Rts': Rts[15:]}
+    # df = pd.DataFrame(data, columns=['Xts', 'Yts', 'Zts', 'Rts'])
+    # df.to_csv(r'/home/ahmad/PycharmProjects/deepCause/datasets/ncdata/synthetic_data_seasonal.csv', index_label=False,
+    #           header=True)
 
     fig = plt.figure()
     ax1 = fig.add_subplot(411)
-    ax1.plot(rg[15:1555])
+    ax1.plot(Xts[15:250])
     ax1.set_ylabel('Xts')
 
     ax2 = fig.add_subplot(412)
-    ax2.plot(temp[15:1555])
+    ax2.plot(Yts[15:250])
     ax2.set_ylabel("Yts")
 
     ax3 = fig.add_subplot(413)
-    ax3.plot(gpp[15:1555])
+    ax3.plot(Zts[15:250])
     ax3.set_ylabel("Zts")
 
-    ax4 = fig.add_subplot(414)
-    ax4.plot(reco[15:1555])
-    ax4.set_ylabel("Rts")
+    # ax3 = fig.add_subplot(414)
+    # ax3.plot(Rts[15:100])
+    # ax3.set_ylabel("Rts")
     plt.show()
