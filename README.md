@@ -37,7 +37,7 @@ https://www.gkd.bayern.de.
 
 ## Code
 `src/main.py` is our main file, where we model multivariate non-linear data using deep networks.
-- `src/deepcause.py` for actual and counterfactual outcome generation using interventions.
+- `src/deepcause.py` for actual and counterfactual outcome generation using interventions for causal inference.
 - `src/knockoffs.py` generate knockoffs of the original variables.
 - `src/daignostics.py` to determine the goodness of the generated knockoff copies.
 - `DeepKnockoffs/` contains the knockoffs generation methods.
