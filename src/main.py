@@ -85,32 +85,6 @@ def running_avg_effect(y, yint):
     return rae
 
 
-# # Parameters for fluxnet2006
-# freq = 'D'
-# epochs = 100
-#
-# training_length = 750  # data for 15 days
-# prediction_length = 15  # data for 1 days
-#
-# start = 0
-# train_stop = start + training_length
-# test_stop = train_stop + prediction_length
-# win_size = 48
-
-# # Parameters for River discharge data
-# freq = 'D'
-# dim = 3
-# epochs = 150
-# win_size = 1
-
-# # Parameters for ecosystem data
-# freq = 'D'
-# dim = 5
-# epochs = 150
-# win_size = 48
-#
-# prediction_length = 14
-# num_samples = 50
 
 # Synthetic data
 freq = '30min'
