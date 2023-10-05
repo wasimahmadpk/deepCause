@@ -1,5 +1,5 @@
 import math
-import netCDF
+# import netCDF
 import pickle
 import random
 import pathlib
@@ -18,7 +18,6 @@ from scipy.special import stdtr
 from model_test import modelTest
 from gluonts.trainer import Trainer
 from gluonts.evaluation import Evaluator
-from counterfactuals import Counterfactuals
 from sklearn.metrics import mean_squared_error
 from gluonts.dataset.common import ListDataset
 from gluonts.model.deepar import DeepAREstimator
@@ -245,8 +244,8 @@ def deepCause(odata, knockoffs, model, params):
                     # css_score = [abs(x) if x < 0 else x for x in css_score]
                     print("-----------------------------------------------------------------------------")
                     css_list.append(css_score)
-                    print("CSS: ", css_score)
-                    print("-----------------------------------------------------------------------------")
+                    # print("CSS: ", css_score)
+                    # print("-----------------------------------------------------------------------------")
 
                 var_list.append(np.var(mapelolint[1]))
                 # print(f"MSE(Mean): {list(np.mean(mselol, axis=0))}")
