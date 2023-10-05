@@ -1,18 +1,17 @@
 # Causal Discovery using Model Invariance (CDMI)
 
-This repository contains code for our paper accepted in ICML Workshop 2022 on Spurious Correlations, Invariance and Stability (SCIS): Causal Discovery using Model Invariance 
-via Knockoffs by Wasim Ahmad, Maha Shadaydeh and Joachim Denzler.
+This repository contains code for our paper accepted in ICMLA 2021: Causal Inference in Non-linear Time-series using Deep Networks and Knockoff Counterfactuals by Wasim Ahmad, Maha Shadaydeh and Joachim Denzler.
 
 - The work can be cited using below citation information.
 
 ```
-@inproceedings{
-ahmad2022causal,
-title={Causal Discovery using Model Invariance through Knockoff Interventions},
-author={Wasim Ahmad and Maha Shadaydeh and Joachim Denzler},
-booktitle={ICML 2022: Workshop on Spurious Correlations, Invariance and Stability},
-year={2022},
-url={https://openreview.net/forum?id=OcNeMVbIdCF}
+@inproceedings{ahmad2021causal,
+  title={Causal inference in non-linear time-series using deep networks and knockoff counterfactuals},
+  author={Ahmad, Wasim and Shadaydeh, Maha and Denzler, Joachim},
+  booktitle={2021 20th IEEE International Conference on Machine Learning and Applications (ICMLA)},
+  pages={449--454},
+  year={2021},
+  organization={IEEE}
 }
 ```
 
@@ -41,14 +40,12 @@ https://www.gkd.bayern.de.
 ## Code
 `src/main.py` is our main file, where we model multivariate non-linear data using deep networks.
 - `src/deepcause.py` for actual and counterfactual outcome generation using interventions.
-- `src/preprocessing.py` for data loading and preprocessing.
 - `src/knockoffs.py` generate knockoffs of the original variables.
 - `src/daignostics.py` to determine the goodness of the generated knockoff copies.
 - `DeepKnockoffs/` contains the knockoffs generation methods.
 - `datasets/` contains the generated synthetic data and real dataset.
 - `model/` contains trained models that we used for different datasets.
 
-We also extend CDMI to discover causal graph in non-stationary time series. To do that, first we segment multivariate non-stationary time series based on their dynamics using [Regime Identification](https://github.com/wasimahmadpk/RegimeIdentification) method and perform regime-oriented causal discovery.
 
 ## Dependencies
 `requirements.txt` contains all the packages that are related to the project.
