@@ -1,4 +1,4 @@
-# Causal Discovery using Model Invariance (CDMI)
+# Deep learning-based Causal Inference in Non-linear Multivariate Time series 
 
 This repository contains code for our paper accepted in ICMLA 2021: Causal Inference in Non-linear Time-series using Deep Networks and Knockoff Counterfactuals by Wasim Ahmad, Maha Shadaydeh and Joachim Denzler.
 
