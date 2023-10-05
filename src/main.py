@@ -1,5 +1,5 @@
 import math
-import netCDF
+# import netCDF
 import pickle
 import random
 import pathlib
@@ -19,7 +19,6 @@ from scipy.special import stdtr
 from model_test import modelTest
 from gluonts.trainer import Trainer
 from gluonts.evaluation import Evaluator
-from counterfactuals import Counterfactuals
 from sklearn.metrics import mean_squared_error
 from gluonts.dataset.common import ListDataset
 from gluonts.model.deepar import DeepAREstimator
@@ -189,7 +188,7 @@ estimator = DeepAREstimator(
 )
 
 # model_path = "models/trained_model_eco22Dec.sav"
-model_path = "models/trained_model_synth.sav"
+model_path = "/home/ahmad/Projects/deepCause/models/trained_model_synth.sav"
 filename = pathlib.Path(model_path)
 if not filename.exists():
     print("Training forecasting model....")
