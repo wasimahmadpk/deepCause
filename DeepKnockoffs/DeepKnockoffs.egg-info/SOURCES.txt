@@ -1,0 +1,14 @@
+MANIFEST.in
+README.rst
+setup.cfg
+setup.py
+DeepKnockoffs/__init__.py
+DeepKnockoffs/gaussian.py
+DeepKnockoffs/kfilter.py
+DeepKnockoffs/machine.py
+DeepKnockoffs/mmd.py
+DeepKnockoffs.egg-info/PKG-INFO
+DeepKnockoffs.egg-info/SOURCES.txt
+DeepKnockoffs.egg-info/dependency_links.txt
+DeepKnockoffs.egg-info/requires.txt
+DeepKnockoffs.egg-info/top_level.txt

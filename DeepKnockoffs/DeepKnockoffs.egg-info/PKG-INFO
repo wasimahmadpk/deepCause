@@ -1,0 +1,27 @@
+Metadata-Version: 1.2
+Name: DeepKnockoffs
+Version: 0.1.0
+Summary: Generates knockoff with neural networks.
+Home-page: https://web.stanford.edu/group/candes/deep-knockoffs/
+Author: Matteo Sesia, Yaniv Romano
+Author-email: msesia@stanford.edu, yromano@stanford.edu
+Maintainer: Matteo Sesia
+Maintainer-email: msesia@stanford.edu
+License: GPL-v3 license
+Description: ====================
+        DeepKnockoffs
+        ====================
+        
+Platform: OS Independent
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Topic :: Scientific/Engineering
+Requires: numpy (>=1.14.0)
+Requires: torch (>=0.4.1)
+Requires: cvxpy (>=1.0.6)
+Requires: scipy (>=1.0.0)
+Provides: DeepKnockoffs
