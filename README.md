@@ -23,10 +23,10 @@ We model the non-linear relation in multivariate non-linear time series using de
 1. First we train deep network <img src="https://render.githubusercontent.com/render/math?math=f_i"> using observational data.
 2. Then we generate knockoffs variables which we use as interventions on the trained model.
 3. We obtained counterfactuals when we replace model variables with knockoffs.
-4.  For each pair variables {<img src="https://render.githubusercontent.com/render/math?math=z_i">, <img src="https://render.githubusercontent.com/render/math?math=z_j">} in nonlinear system, we apply hypthosis test on the mean of the residuals distribution <img src="https://render.githubusercontent.com/render/math?math=M_res"> of model residuals for multiple realization of the time series.
+4.  For each pair variables {<img src="https://render.githubusercontent.com/render/math?math=z_i">, <img src="https://render.githubusercontent.com/render/math?math=z_j">} in nonlinear system, we apply hypthosis test on the mean of the residuals distribution $M_{res}$ of model residuals for multiple realization of the time series.
 5. Our NULL hypothesis is that variable <img src="https://render.githubusercontent.com/render/math?math=z_i"> does not cause <img src="https://render.githubusercontent.com/render/math?math=z_j">, 
 <img src="https://render.githubusercontent.com/render/math?math=H_0">: $M_{res}$ == 0, 
-else the alternate hypothesis <img src="https://render.githubusercontent.com/render/math?math=H_1">: $M_{res}$ > 0>  is accepted.
+else the alternate hypothesis <img src="https://render.githubusercontent.com/render/math?math=H_1">: $M_{res}$ > 0 is accepted.
 
 
 ## Data
