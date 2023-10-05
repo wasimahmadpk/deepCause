@@ -25,7 +25,7 @@ We model the non-linear relation in multivariate non-linear time series using de
 3. We obtained counterfactuals when we replace model variables with knockoffs.
 4.  For each pair variables {<img src="https://render.githubusercontent.com/render/math?math=z_i">, <img src="https://render.githubusercontent.com/render/math?math=z_j">} in nonlinear system, we apply hypthosis test on the mean of the residuals distribution <img src="https://render.githubusercontent.com/render/math?math=M_res">, <img src="https://render.githubusercontent.com/render/math?math=R_k"> of model residuals for multiple realization of the time series.
 5. Our NULL hypothesis is that variable <img src="https://render.githubusercontent.com/render/math?math=z_i"> does not cause <img src="https://render.githubusercontent.com/render/math?math=z_j">, 
-<img src="https://render.githubusercontent.com/render/math?math=H_0">: <img src="https://render.githubusercontent.com/render/math?math=M_res"> = 0, 
+<img src="https://render.githubusercontent.com/render/math?math=H_0">: <img src="https://render.githubusercontent.com/render/math?math=M_res"> = $M_res$ 0, 
 else the alternate hypothesis <img src="https://render.githubusercontent.com/render/math?math=H_1">: <img src="https://render.githubusercontent.com/render/math?math=R_i"> != 0>  is accepted.
 
 
