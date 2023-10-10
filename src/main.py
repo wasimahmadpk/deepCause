@@ -180,6 +180,7 @@ obj = Knockoffs()
 knockoffs = obj.GenKnockoffs(n, dim, data_actual)
 
 
+# Ground truth causal graph for synthetic time series
 prior_graph = np.array([[1, 0, 0, 0], [1, 1, 0, 0], [0, 1, 1, 0],
                [1, 1, 1, 1]])
 
